@@ -78,17 +78,25 @@
     let currentSeriesEps = [];
     let currentEpIndex = null;
 
-    // Parse M3U e exclui 'Ao Vivo'
+    // Parse M3U e exclui canais "Ao Vivo" e URLs sem extensão VOD
     function parseM3U(text) {
       const lines = text.split(/\r?\n/);
       const items = [];
+      const vodExt = /\.(mp4|mkv|mov|avi|webm|m3u8)$/i;
+
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].startsWith('#EXTINF')) {
           const title = (lines[i].match(/,(.*)/) || [])[1]?.trim();
           const thumb = (lines[i].match(/tvg-logo="(.*?)"/) || [])[1] || 'https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem';
           const group = (lines[i].match(/group-title="(.*?)"/) || [])[1] || '';
           const url = lines[i+1]?.trim();
-          if (url && url.startsWith('http') && group.toLowerCase() !== 'ao vivo') {
+          // só adiciona se não for "ao vivo" E tiver extensão VOD
+          if (
+            url &&
+            url.startsWith('http') &&
+            group.toLowerCase() !== 'ao vivo' &&
+            vodExt.test(url)
+          ) {
             items.push({ title, url, thumb, group });
           }
         }
@@ -113,13 +121,12 @@
       return { series, movies };
     }
 
-    // Renderiza filmes paginados e séries como blocos
+    // Renderiza filmes e séries
     function renderPage() {
       contentDiv.innerHTML = '';
       const { series, movies } = groupItems(filteredItems);
       const start = (currentPage - 1) * itemsPerPage;
       movies.slice(start, start + itemsPerPage).forEach(renderCard);
-
       loadMoreContainer.innerHTML = '';
       if (movies.length > currentPage * itemsPerPage) {
         const btn = document.createElement('button');
@@ -128,8 +135,6 @@
         btn.onclick = () => { currentPage++; renderPage(); };
         loadMoreContainer.appendChild(btn);
       }
-
-      // Série como um único card
       Object.entries(series).forEach(([name, eps]) => {
         const card = document.createElement('div');
         card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-105 transition duration-300 overflow-hidden';
@@ -141,7 +146,6 @@
         contentDiv.appendChild(card);
       });
     }
-
     function renderCard(item) {
       const card = document.createElement('div');
       card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-105 transition duration-300 overflow-hidden';
@@ -210,7 +214,10 @@
     function filterItems() {
       const q = searchInput.value.toLowerCase();
       const cat = categorySelect.value;
-      filteredItems = allItems.filter(i => i.title.toLowerCase().includes(q) && (!cat || i.group === cat));
+      filteredItems = allItems.filter(i =>
+        i.title.toLowerCase().includes(q) &&
+        (!cat || i.group === cat)
+      );
       currentPage = 1;
       renderPage();
     }
