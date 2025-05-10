@@ -21,6 +21,9 @@
         <span id="loadSpinner" class="absolute left-3 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin hidden"></span>
         📥 Baixar Lista
       </button>
+      <button id="limparListaBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">
+        🗑️ Limpar Lista
+      </button>
     </div>
 
     <div id="playerContainer" class="relative mb-10 hidden">
@@ -37,7 +40,6 @@
     <div id="loadMoreContainer" class="mt-6 flex justify-center"></div>
   </div>
 
-  <!-- Modal para Episódios -->
   <div id="episodesModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center">
     <div class="bg-gray-900 rounded-xl p-6 max-w-lg w-full relative">
       <button id="closeModal" class="absolute top-3 right-3 text-white text-2xl">&times;</button>
@@ -67,6 +69,7 @@
     const closeModal = document.getElementById('closeModal');
     const modalTitle = document.getElementById('modalTitle');
     const episodesList = document.getElementById('episodesList');
+    const limparListaBtn = document.getElementById('limparListaBtn');
 
     let allItems = [];
     let filteredItems = [];
@@ -78,7 +81,46 @@
     let currentSeriesEps = [];
     let currentEpIndex = null;
 
-    // Parse M3U e exclui canais "Ao Vivo" e URLs sem extensão VOD
+    const dbName = 'RykelmyFilmesDB';
+    const storeName = 'm3uStore';
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(dbName, 1);
+        request.onerror = () => reject(request.error);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          db.createObjectStore(storeName);
+        };
+        request.onsuccess = () => resolve(request.result);
+      });
+    }
+
+    async function saveToDB(key, data) {
+      const db = await openDB();
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).put(data, key);
+      return tx.complete;
+    }
+
+    async function getFromDB(key) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result || '');
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function clearDB() {
+      const db = await openDB();
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).clear();
+      return tx.complete;
+    }
+
     function parseM3U(text) {
       const lines = text.split(/\r?\n/);
       const items = [];
@@ -90,13 +132,7 @@
           const thumb = (lines[i].match(/tvg-logo="(.*?)"/) || [])[1] || 'https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem';
           const group = (lines[i].match(/group-title="(.*?)"/) || [])[1] || '';
           const url = lines[i+1]?.trim();
-          // só adiciona se não for "ao vivo" E tiver extensão VOD
-          if (
-            url &&
-            url.startsWith('http') &&
-            group.toLowerCase() !== 'ao vivo' &&
-            vodExt.test(url)
-          ) {
+          if (url && url.startsWith('http') && group.toLowerCase() !== 'ao vivo' && vodExt.test(url)) {
             items.push({ title, url, thumb, group });
           }
         }
@@ -104,7 +140,6 @@
       return items;
     }
 
-    // Agrupa séries e filmes
     function groupItems(items) {
       const series = {};
       const movies = [];
@@ -121,7 +156,6 @@
       return { series, movies };
     }
 
-    // Renderiza filmes e séries
     function renderPage() {
       contentDiv.innerHTML = '';
       const { series, movies } = groupItems(filteredItems);
@@ -146,17 +180,20 @@
         contentDiv.appendChild(card);
       });
     }
+
     function renderCard(item) {
+      const isLast = localStorage.getItem('last_film') === item.title;
       const card = document.createElement('div');
       card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-105 transition duration-300 overflow-hidden';
       card.innerHTML = `
         <img src="${item.thumb}" alt="${item.title}" class="aspect-video object-cover rounded-lg mb-2 w-full" onerror="this.src='https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem'"/>
-        <h3 class="text-sm truncate">${item.title}</h3>`;
+        <h3 class="text-sm truncate flex justify-between items-center">
+          <span>${item.title}</span> ${isLast ? '<span class="text-red-500">🔴</span>' : ''}
+        </h3>`;
       card.onclick = () => { openVideoLink(item); window.scrollTo({ top: 0, behavior: 'smooth' }); };
       contentDiv.appendChild(card);
     }
 
-    // Modal de série
     function openSeries(name, eps) {
       currentSeriesName = name;
       currentSeriesEps = eps;
@@ -172,7 +209,6 @@
       });
       episodesModal.classList.remove('hidden');
     }
-    closeModal.onclick = () => episodesModal.classList.add('hidden');
 
     function playEpisode(idx) {
       currentEpIndex = idx;
@@ -195,8 +231,13 @@
 
     function openVideoLink(item) {
       if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+      if (!currentSeriesName) {
+        localStorage.setItem('last_film', item.title);
+      }
       if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) {
-        hlsInstance = new Hls(); hlsInstance.loadSource(item.url); hlsInstance.attachMedia(player);
+        hlsInstance = new Hls();
+        hlsInstance.loadSource(item.url);
+        hlsInstance.attachMedia(player);
         hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => player.play().catch(() => {}));
       } else {
         player.src = item.url;
@@ -204,6 +245,7 @@
       }
       playerContainer.classList.remove('hidden');
     }
+
     closePlayer.onclick = () => {
       if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
       player.pause();
@@ -221,6 +263,7 @@
       currentPage = 1;
       renderPage();
     }
+
     searchInput.oninput = filterItems;
     categorySelect.onchange = filterItems;
 
@@ -247,6 +290,8 @@
           if (!f) return;
           text = await f.text();
         }
+
+        await saveToDB('m3u_data', text);
         allItems = parseM3U(text);
         updateCategories();
         filterItems();
@@ -255,8 +300,23 @@
       }
       loadSpinner.classList.add('hidden');
     }
+
     baixarBtn.onclick = () => loadList('fetch');
     fileInput.onchange = () => loadList('file');
+
+    limparListaBtn.onclick = async () => {
+      await clearDB();
+      location.reload();
+    };
+
+    // Carrega lista salva do IndexedDB ao iniciar
+    getFromDB('m3u_data').then(text => {
+      if (text) {
+        allItems = parseM3U(text);
+        updateCategories();
+        filterItems();
+      }
+    });
   </script>
 </body>
 </html>
