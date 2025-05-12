@@ -317,6 +317,65 @@
         filterItems();
       }
     });
+    function openVideoLink(item) {
+    // Destroi instância HLS anterior
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+
+    // Marca último filme (para destaque na grid)
+    if (!currentSeriesName) {
+      localStorage.setItem('last_film', item.title);
+    }
+
+    // Se existir tempo salvo, recupera antes de tocar
+    const savedTimeKey = `time_${item.title}`;
+    const savedTime = parseFloat(localStorage.getItem(savedTimeKey)) || 0;
+
+    // Seleciona a fonte de vídeo
+    if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) {
+      hlsInstance = new Hls();
+      hlsInstance.loadSource(item.url);
+      hlsInstance.attachMedia(player);
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+        // Depois de parse, ajusta o tempo salvo e dá play
+        if (savedTime > 0) {
+          player.currentTime = savedTime;
+        }
+        player.play().catch(() => {});
+      });
+    } else {
+      player.src = item.url;
+      // Aguarda o carregamento dos metadados para setar o tempo
+      player.addEventListener('loadedmetadata', function resume() {
+        if (savedTime > 0) {
+          player.currentTime = savedTime;
+        }
+        player.play().catch(() => {});
+        player.removeEventListener('loadedmetadata', resume);
+      });
+    }
+
+    // Mostra o container do player
+    playerContainer.classList.remove('hidden');
+
+    // A cada atualização de tempo, salva no localStorage
+    player.addEventListener('timeupdate', onTimeUpdate);
+
+    function onTimeUpdate() {
+      localStorage.setItem(savedTimeKey, player.currentTime);
+    }
+  }
+
+  closePlayer.onclick = () => {
+    // Remove listener de timeupdate antes de esconder
+    player.removeEventListener('timeupdate', onTimeUpdate);
+
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    player.pause();
+    player.src = '';
+    playerContainer.classList.add('hidden');
+  };
+
+  // ... (todo o resto do código permanece igual)
   </script>
 </body>
 </html>
