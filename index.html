@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>📺 CINEBLACK</title>
+  <header class="text-center py-6 bg-gradient-to-r from-red-700 to-red-500"> <h1 class="text-3xl font-bold">📺 CINEBLACK</h1> <p class="text-sm text-white/80 mt-1">Seu portal de filmes e séries</p> </header>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
@@ -184,7 +185,7 @@
     function renderCard(item) {
       const isLast = localStorage.getItem('last_film') === item.title;
       const card = document.createElement('div');
-      card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-105 transition duration-300 overflow-hidden';
+      card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-150 transition duration-300 overflow-hidden';
       card.innerHTML = `
         <img src="${item.thumb}" alt="${item.title}" class="aspect-video object-cover rounded-lg mb-2 w-full" onerror="this.src='https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem'"/>
         <h3 class="text-sm truncate flex justify-between items-center">
