@@ -1,382 +1,399 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>📺 CINEBLACK</title>
-  <header class="text-center py-6 bg-gradient-to-r from-red-700 to-red-500"> <h1 class="text-3xl font-bold">📺 CINEBLACK</h1> <p class="text-sm text-white/80 mt-1">Seu portal de filmes e séries</p> </header>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🍿 CINEBLACK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        /* Ajuste para o padding do container principal */
+        .p-6 {
+            padding: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .p-6 {
+                padding: 2rem;
+            }
+        }
+        /* Estilos para o overlay do modal de detalhes */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        /* Responsividade para o iframe do YouTube */
+        .video-responsive {
+            overflow: hidden;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            position: relative;
+            height: 0;
+        }
+        .video-responsive iframe {
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+        }
+    </style>
 </head>
 <body class="bg-black text-white font-sans min-h-screen flex flex-col">
-  <div class="p-6 max-w-7xl mx-auto flex-1">
-    <h1 class="text-4xl font-bold mb-6 text-center">📺CINEBLACK</h1>
+    <header class="text-center py-6 bg-gradient-to-r from-blue-700 to-red-500 flex justify-between items-center px-4">
+        <h1 class="text-3xl font-bold">🍿 CINEBLACK</h1>
+        <nav>
+            <button id="showMoviesBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Filmes</button>
+            <button id="showSeriesBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Séries</button>
+            <button id="showHistoryBtn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Histórico</button>
+        </nav>
+    </header>
 
-    <div class="flex flex-col md:flex-row gap-4 mb-6 justify-center items-center">
-      <input type="file" id="fileInput" accept=".m3u,.txt" class="file:bg-gray-800 file:border-none file:px-4 file:py-2 file:rounded file:text-white file:cursor-pointer" />
-      <input type="text" id="searchInput" placeholder="Pesquisar..." class="p-3 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-600 w-full md:w-80" />
-      <select id="categorySelect" class="p-3 rounded bg-gray-800 text-white border border-gray-600 w-full md:w-60">
-        <option value="">Todas as Categorias</option>
-      </select>
-      <button id="baixarListaBtn" class="relative bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center justify-center">
-        <span id="loadSpinner" class="absolute left-3 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin hidden"></span>
-        📥 CARREGAR LISTA DE CONTEUDO
-      </button>
-      <button id="limparListaBtn" class="bg-gray-600 hover:bg-GRAY-700 text-white px-4 py-2 rounded">
-        🔄 ATUALIZAR LISTA
-      </button>
+    <div class="p-6 max-w-7xl mx-auto flex-1 w-full">
+        <div class="flex flex-col md:flex-row gap-4 mb-6 justify-center items-center">
+            <input type="text" id="searchInput" placeholder="Pesquisar..." class="p-3 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-600 w-full md:w-80" />
+            <select id="categorySelect" class="p-3 rounded bg-gray-800 text-white border border-gray-600 w-full md:w-60">
+                <option value="">Todas as Categorias</option>
+            </select>
+            <button id="baixarListaBtn" class="relative bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center justify-center transition-colors">
+                <span id="loadSpinner" class="absolute left-3 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin hidden"></span>
+                📥 CARREGAR LISTA DE CONTEUDO
+            </button>
+            <button id="limparListaBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-0.5 py-0.5 rounded transition-colors">
+                🔄 ATUALIZAR LISTA
+            </button>
+        </div>
+
+        <div id="playerContainer" class="relative mb-10 hidden">
+            <video id="player" controls muted class="w-full max-w-4xl mx-auto block rounded-lg shadow-2xl"></video>
+            <div class="mt-2 flex justify-center gap-4">
+                <button id="prevEpisodeBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">Anterior</button>
+                <button id="nextEpisodeBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">Próximo</button>
+            </div>
+            <button id="closePlayer" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-lg transition-colors">✖</button>
+        </div>
+
+        <div id="moviesSection">
+            <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-center uppercase tracking-wide text-pink-500">
+                🎬 Filmes Disponíveis
+            </h2>
+            <div id="moviesGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="text-center text-gray-400 py-10 col-span-full">
+                    Carregando filmes...
+                </div>
+            </div>
+        </div>
+
+        <div id="seriesSection" class="hidden">
+            <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-center uppercase tracking-wide text-pink-500 mt-10">
+                📺 Séries Disponíveis
+            </h2>
+            <div id="seriesGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="text-center text-gray-400 py-10 col-span-full">
+                    Carregando séries...
+                </div>
+            </div>
+        </div>
+
+        <div id="historySection" class="hidden">
+            <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-center uppercase tracking-wide text-pink-500 mt-10">
+                🕒 Histórico de Visualização
+            </h2>
+            <button id="clearHistoryBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md mb-6 transition-colors">Limpar Histórico</button>
+            <div id="historyGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="text-center text-gray-400 py-10 col-span-full">
+                    Histórico vazio. Comece a assistir!
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div id="playerContainer" class="relative mb-10 hidden">
-      <video id="player" controls muted class="w-full max-w-4xl mx-auto block rounded-lg shadow-2xl"></video>
-      <div class="mt-2 flex justify-center gap-4">
-        <button id="prevEpisodeBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded">Anterior</button>
-        <button id="nextEpisodeBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded">Próximo</button>
-      </div>
-      <button id="closePlayer" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full">✖</button>
+    <div id="episodesModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+        <div class="bg-gray-900 rounded-xl p-6 max-w-lg w-full relative">
+            <button id="closeModal" class="absolute top-3 right-3 text-white text-2xl font-bold">×</button>
+            <h3 id="modalTitle" class="text-xl font-bold mb-4">Episódios</h3>
+            <div id="episodesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+        </div>
     </div>
 
-    <h2 class="text-2xl mb-4">Filmes Disponíveis</h2>
-    <div id="content" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
-    <div id="loadMoreContainer" class="mt-6 flex justify-center"></div>
-  </div>
-
-  <div id="episodesModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center">
-    <div class="bg-gray-900 rounded-xl p-6 max-w-lg w-full relative">
-      <button id="closeModal" class="absolute top-3 right-3 text-white text-2xl">&times;</button>
-      <h3 id="modalTitle" class="text-xl font-bold mb-4">Episódios</h3>
-      <div id="episodesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+    <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 modal-overlay">
+        <div class="bg-gray-900 rounded-xl p-6 max-w-2xl w-full relative mx-4 max-h-[90vh] overflow-y-auto">
+            <button id="closeDetailsModal" class="absolute top-3 right-3 text-white text-2xl font-bold">×</button>
+            <div class="flex flex-col md:flex-row gap-6">
+                <img id="detailPoster" src="https://dummyimage.com/200x300/444/fff.png&text=Carregando..." alt="Pôster" class="w-full md:w-1/3 rounded-lg object-cover flex-shrink-0" onerror="this.src='https://dummyimage.com/200x300/444/fff.png&text=Sem+Pôster'"/>
+                <div class="flex-1">
+                    <h3 id="detailTitle" class="text-3xl font-bold mb-2">Carregando...</h3>
+                    <p id="detailYearGenre" class="text-gray-400 text-sm mb-3">Ano | Gênero</p>
+                    <p id="detailPlot" class="text-gray-300 text-base mb-4">Carregando sinopse...</p>
+                    <p id="detailActors" class="text-gray-400 text-sm mb-2"><strong>Elenco:</strong> Carregando...</p>
+                    <p id="detailDirector" class="text-gray-400 text-sm mb-2"><strong>Diretor:</strong> Carregando...</p>
+                    <p id="detailRating" class="text-gray-400 text-sm mb-4"><strong>Avaliação:</strong> Carregando...</p>
+                    <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                        <button id="playMovieButton" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-semibold w-full sm:w-1/2 transition-colors flex items-center justify-center">
+                            ▶️ Assistir
+                        </button>
+                        <button id="viewTrailerButton" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg text-lg font-semibold w-full sm:w-1/2 transition-colors flex items-center justify-center hidden">
+                            ▶️ Ver Trailer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <footer class="text-center text-gray-500 p-4 text-sm">
-    © 2025 - UMA IDEIA QUE NASCEU NOS CORREDORES DO IFBA
-  </footer>
+    <div id="trailerModal" class="fixed inset-0 bg-black bg-opacity-90 hidden items-center justify-center z-[100] modal-overlay">
+        <div class="bg-gray-900 rounded-lg p-4 max-w-4xl w-full relative mx-4">
+            <button id="closeTrailerModal" class="absolute top-2 right-2 text-white text-3xl font-bold">×</button>
+            <div class="video-responsive">
+                <iframe id="youtubePlayer" width="560" height="315" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
 
-  <script>
-    const fileInput = document.getElementById('fileInput');
-    const searchInput = document.getElementById('searchInput');
-    const categorySelect = document.getElementById('categorySelect');
-    const contentDiv = document.getElementById('content');
-    const loadMoreContainer = document.getElementById('loadMoreContainer');
-    const baixarBtn = document.getElementById('baixarListaBtn');
-    const loadSpinner = document.getElementById('loadSpinner');
-    const playerContainer = document.getElementById('playerContainer');
-    const player = document.getElementById('player');
-    const closePlayer = document.getElementById('closePlayer');
-    const prevEpisodeBtn = document.getElementById('prevEpisodeBtn');
-    const nextEpisodeBtn = document.getElementById('nextEpisodeBtn');
-    const episodesModal = document.getElementById('episodesModal');
-    const closeModal = document.getElementById('closeModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const episodesList = document.getElementById('episodesList');
-    const limparListaBtn = document.getElementById('limparListaBtn');
+    <footer class="text-center text-gray-400 p-4 text-sm mt-auto">
+        © 2025 - UMA IDEIA QUE NASCEU NOS CORREDORES DO IFBA
+    </footer>
 
-    let allItems = [];
-    let filteredItems = [];
-    let currentPage = 1;
-    const itemsPerPage = 60;
-    let hlsInstance = null;
+    <script>
+        // --- CHAVE DA TMDb API ---
+        // SUA CHAVE DA TMDb API (v3 - API Read Access Token)
+        // Obtenha uma em themoviedb.org/signup -> Settings -> API
+        const TMDb_API_KEY = 'fb0e86e11124588a98eb2e0c5909126c'; 
+        // --- FIM DA CHAVE ---
 
-    let currentSeriesName = null;
-    let currentSeriesEps = [];
-    let currentEpIndex = null;
+        const searchInput = document.getElementById('searchInput');
+        const categorySelect = document.getElementById('categorySelect');
+        const baixarBtn = document.getElementById('baixarListaBtn');
+        const loadSpinner = document.getElementById('loadSpinner');
+        const playerContainer = document.getElementById('playerContainer');
+        const player = document.getElementById('player');
+        const closePlayer = document.getElementById('closePlayer');
+        const prevEpisodeBtn = document.getElementById('prevEpisodeBtn');
+        const nextEpisodeBtn = document.getElementById('nextEpisodeBtn');
+        const episodesModal = document.getElementById('episodesModal');
+        const closeModal = document.getElementById('closeModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const episodesList = document.getElementById('episodesList');
+        const limparListaBtn = document.getElementById('limparListaBtn');
 
-    const dbName = 'RykelmyFilmesDB';
-    const storeName = 'm3uStore';
+        // Elementos para seções
+        const moviesSection = document.getElementById('moviesSection');
+        const seriesSection = document.getElementById('seriesSection');
+        const historySection = document.getElementById('historySection'); 
+        const showMoviesBtn = document.getElementById('showMoviesBtn');
+        const showSeriesBtn = document.getElementById('showSeriesBtn');
+        const showHistoryBtn = document.getElementById('showHistoryBtn'); 
+        const moviesGrid = document.getElementById('moviesGrid');
+        const seriesGrid = document.getElementById('seriesGrid');
+        const historyGrid = document.getElementById('historyGrid');     
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn'); 
 
-    function openDB() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(dbName, 1);
-        request.onerror = () => reject(request.error);
-        request.onupgradeneeded = () => {
-          const db = request.result;
-          db.createObjectStore(storeName);
-        };
-        request.onsuccess = () => resolve(request.result);
-      });
-    }
+        // Elementos do Modal de Detalhes
+        const detailsModal = document.getElementById('detailsModal');
+        const closeDetailsModal = document.getElementById('closeDetailsModal');
+        const detailPoster = document.getElementById('detailPoster');
+        const detailTitle = document.getElementById('detailTitle');
+        const detailYearGenre = document.getElementById('detailYearGenre');
+        const detailPlot = document.getElementById('detailPlot');
+        const detailActors = document.getElementById('detailActors');
+        const detailDirector = document.getElementById('detailDirector'); 
+        const detailRating = document.getElementById('detailRating');
+        const playMovieButton = document.getElementById('playMovieButton');
+        const viewTrailerButton = document.getElementById('viewTrailerButton'); 
 
-    async function saveToDB(key, data) {
-      const db = await openDB();
-      const tx = db.transaction(storeName, 'readwrite');
-      tx.objectStore(storeName).put(data, key);
-      return tx.complete;
-    }
+        // Elementos do Modal de Trailer
+        const trailerModal = document.getElementById('trailerModal');
+        const closeTrailerModal = document.getElementById('closeTrailerModal');
+        const youtubePlayer = document.getElementById('youtubePlayer');
 
-    async function getFromDB(key) {
-      const db = await openDB();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(storeName, 'readonly');
-        const store = tx.objectStore(storeName);
-        const request = store.get(key);
-        request.onsuccess = () => resolve(request.result || '');
-        request.onerror = () => reject(request.error);
-      });
-    }
+        let allItems = []; 
+        let filteredItems = [];
 
-    async function clearDB() {
-      const db = await openDB();
-      const tx = db.transaction(storeName, 'readwrite');
-      tx.objectStore(storeName).clear();
-      return tx.complete;
-    }
+        let moviesToDisplay = [];
+        let seriesToDisplay = {};
 
-    function parseM3U(text) {
-      const lines = text.split(/\r?\n/);
-      const items = [];
-      const vodExt = /\.(mp4|mkv|mov|avi|webm|m3u8)$/i;
+        let hlsInstance = null;
 
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('#EXTINF')) {
-          const title = (lines[i].match(/,(.*)/) || [])[1]?.trim();
-          const thumb = (lines[i].match(/tvg-logo="(.*?)"/) || [])[1] || 'https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem';
-          const group = (lines[i].match(/group-title="(.*?)"/) || [])[1] || '';
-          const url = lines[i+1]?.trim();
-          if (url && url.startsWith('http') && group.toLowerCase() !== 'ao vivo' && vodExt.test(url)) {
-            items.push({ title, url, thumb, group });
-          }
-        }
-      }
-      return items;
-    }
+        let currentSeriesName = null;
+        let currentSeriesEps = [];
+        let currentEpIndex = null;
+        let currentPlayItem = null; 
 
-    function groupItems(items) {
-      const series = {};
-      const movies = [];
-      items.forEach(item => {
-        const match = item.title.match(/^(.*) S(\d+)E(\d+)/);
-        if (match) {
-          const name = match[1].trim();
-          series[name] = series[name] || [];
-          series[name].push(item);
-        } else {
-          movies.push(item);
-        }
-      });
-      return { series, movies };
-    }
+        const dbName = 'RykelmyFilmesDB';
+        const dbVersion = 2; // Versão do IndexedDB
+        const storeName = 'm3uStore';
 
-    function renderPage() {
-      contentDiv.innerHTML = '';
-      const { series, movies } = groupItems(filteredItems);
-      const start = (currentPage - 1) * itemsPerPage;
-      movies.slice(start, start + itemsPerPage).forEach(renderCard);
-      loadMoreContainer.innerHTML = '';
-      if (movies.length > currentPage * itemsPerPage) {
-        const btn = document.createElement('button');
-        btn.textContent = 'Carregar Mais';
-        btn.className = 'px-6 py-2 bg-gray-700 rounded hover:bg-gray-600 transition';
-        btn.onclick = () => { currentPage++; renderPage(); };
-        loadMoreContainer.appendChild(btn);
-      }
-      Object.entries(series).forEach(([name, eps]) => {
-        const card = document.createElement('div');
-        card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-105 transition duration-300 overflow-hidden';
-        card.innerHTML = `
-          <img src="${eps[0].thumb}" alt="${name}" class="aspect-video object-cover rounded-lg mb-2 w-full" onerror="this.src='https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem'"/>
-          <h3 class="font-bold text-center">${name}</h3>
-          <p class="text-sm text-center">${eps.length} episódios</p>`;
-        card.onclick = () => openSeries(name, eps);
-        contentDiv.appendChild(card);
-      });
-    }
-
-    function renderCard(item) {
-      const isLast = localStorage.getItem('last_film') === item.title;
-      const card = document.createElement('div');
-      card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-150 transition duration-300 overflow-hidden';
-      card.innerHTML = `
-        <img src="${item.thumb}" alt="${item.title}" class="aspect-video object-cover rounded-lg mb-2 w-full" onerror="this.src='https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem'"/>
-        <h3 class="text-sm truncate flex justify-between items-center">
-          <span>${item.title}</span> ${isLast ? '<span class="text-red-500">🔴</span>' : ''}
-        </h3>`;
-      card.onclick = () => { openVideoLink(item); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-      contentDiv.appendChild(card);
-    }
-
-    function openSeries(name, eps) {
-      currentSeriesName = name;
-      currentSeriesEps = eps;
-      modalTitle.textContent = name;
-      episodesList.innerHTML = '';
-      const last = localStorage.getItem(`last_${name}`);
-      eps.forEach((ep, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'w-full text-left p-2 bg-gray-700 rounded hover:bg-gray-600 flex justify-between';
-        btn.innerHTML = `<span>${ep.title}</span>${ep.title===last?'<span>🔴</span>':''}`;
-        btn.onclick = () => playEpisode(idx);
-        episodesList.appendChild(btn);
-      });
-      episodesModal.classList.remove('hidden');
-    }
-
-    function playEpisode(idx) {
-      currentEpIndex = idx;
-      const ep = currentSeriesEps[idx];
-      localStorage.setItem(`last_${currentSeriesName}`, ep.title);
-      openVideoLink(ep);
-      episodesModal.classList.add('hidden');
-    }
-
-    nextEpisodeBtn.onclick = () => {
-      if (currentSeriesEps && currentEpIndex < currentSeriesEps.length - 1) {
-        playEpisode(currentEpIndex + 1);
-      }
-    };
-    prevEpisodeBtn.onclick = () => {
-      if (currentSeriesEps && currentEpIndex > 0) {
-        playEpisode(currentEpIndex - 1);
-      }
-    };
-
-    function openVideoLink(item) {
-      if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-      if (!currentSeriesName) {
-        localStorage.setItem('last_film', item.title);
-      }
-      if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) {
-        hlsInstance = new Hls();
-        hlsInstance.loadSource(item.url);
-        hlsInstance.attachMedia(player);
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => player.play().catch(() => {}));
-      } else {
-        player.src = item.url;
-        player.play().catch(() => {});
-      }
-      playerContainer.classList.remove('hidden');
-    }
-
-    closePlayer.onclick = () => {
-      if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-      player.pause();
-      player.src = '';
-      playerContainer.classList.add('hidden');
-    };
-
-    function filterItems() {
-      const q = searchInput.value.toLowerCase();
-      const cat = categorySelect.value;
-      filteredItems = allItems.filter(i =>
-        i.title.toLowerCase().includes(q) &&
-        (!cat || i.group === cat)
-      );
-      currentPage = 1;
-      renderPage();
-    }
-
-    searchInput.oninput = filterItems;
-    categorySelect.onchange = filterItems;
-
-    function updateCategories() {
-      const cats = [...new Set(allItems.map(i => i.group).filter(Boolean))].sort();
-      categorySelect.innerHTML = '<option value="">Todas as Categorias</option>';
-      cats.forEach(c => {
-        const o = document.createElement('option');
-        o.value = c;
-        o.textContent = c;
-        categorySelect.appendChild(o);
-      });
-    }
-
-    async function loadList(src) {
-      loadSpinner.classList.remove('hidden');
-      try {
-        let text = '';
-        if (src === 'fetch') {
-          const res = await fetch('https://masteriptv.tech/get.php?username=393880589&password=335139230&type=m3u_plus&output=ts');
-          text = await res.text();
-        } else {
-          const f = fileInput.files[0];
-          if (!f) return;
-          text = await f.text();
+        // --- Funções de IndexedDB ---
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, dbVersion);
+                request.onerror = (event) => {
+                    console.error("Erro IndexedDB ao abrir:", event.target.error);
+                    reject(event.target.error);
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(storeName)) {
+                        db.createObjectStore(storeName);
+                    }
+                };
+                request.onsuccess = (event) => resolve(event.target.result);
+            });
         }
 
-        await saveToDB('m3u_data', text);
-        allItems = parseM3U(text);
-        updateCategories();
-        filterItems();
-      } catch (e) {
-        alert('Erro: ' + e.message);
-      }
-      loadSpinner.classList.add('hidden');
-    }
-
-    baixarBtn.onclick = () => loadList('fetch');
-    fileInput.onchange = () => loadList('file');
-
-    limparListaBtn.onclick = async () => {
-      await clearDB();
-      location.reload();
-    };
-
-    // Carrega lista salva do IndexedDB ao iniciar
-    getFromDB('m3u_data').then(text => {
-      if (text) {
-        allItems = parseM3U(text);
-        updateCategories();
-        filterItems();
-      }
-    });
-    function openVideoLink(item) {
-    // Destroi instância HLS anterior
-    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-
-    // Marca último filme (para destaque na grid)
-    if (!currentSeriesName) {
-      localStorage.setItem('last_film', item.title);
-    }
-
-    // Se existir tempo salvo, recupera antes de tocar
-    const savedTimeKey = `time_${item.title}`;
-    const savedTime = parseFloat(localStorage.getItem(savedTimeKey)) || 0;
-
-    // Seleciona a fonte de vídeo
-    if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) {
-      hlsInstance = new Hls();
-      hlsInstance.loadSource(item.url);
-      hlsInstance.attachMedia(player);
-      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-        // Depois de parse, ajusta o tempo salvo e dá play
-        if (savedTime > 0) {
-          player.currentTime = savedTime;
+        async function saveToDB(key, data) {
+            const db = await openDB();
+            const tx = db.transaction(storeName, 'readwrite');
+            tx.objectStore(storeName).put(data, key);
+            return tx.complete;
         }
-        player.play().catch(() => {});
-      });
-    } else {
-      player.src = item.url;
-      // Aguarda o carregamento dos metadados para setar o tempo
-      player.addEventListener('loadedmetadata', function resume() {
-        if (savedTime > 0) {
-          player.currentTime = savedTime;
+
+        async function getFromDB(key) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const request = store.get(key);
+                request.onsuccess = (event) => resolve(event.target.result || '');
+                request.onerror = (event) => reject(event.target.error);
+            });
         }
-        player.play().catch(() => {});
-        player.removeEventListener('loadedmetadata', resume);
-      });
-    }
 
-    // Mostra o container do player
-    playerContainer.classList.remove('hidden');
+        async function clearDB() {
+            const db = await openDB();
+            const tx = db.transaction(storeName, 'readwrite');
+            tx.objectStore(storeName).clear();
+            return tx.complete;
+        }
 
-    // A cada atualização de tempo, salva no localStorage
-    player.addEventListener('timeupdate', onTimeUpdate);
+        // --- Funções de Histórico (LocalStorage) ---
+        function getHistory() {
+            try {
+                return JSON.parse(localStorage.getItem('cineblack_history') || '[]');
+            } catch (e) {
+                console.error("Erro ao parsear histórico do localStorage:", e);
+                return [];
+            }
+        }
 
-    function onTimeUpdate() {
-      localStorage.setItem(savedTimeKey, player.currentTime);
-    }
-  }
+        function saveHistory(history) {
+            localStorage.setItem('cineblack_history', JSON.stringify(history));
+        }
 
-  closePlayer.onclick = () => {
-    // Remove listener de timeupdate antes de esconder
-    player.removeEventListener('timeupdate', onTimeUpdate);
+        function addToHistory(item, type = 'movie') { 
+            let history = getHistory();
+            const newItem = {
+                title: item.title,
+                url: item.url,
+                thumb: item.thumb,
+                group: item.group,
+                type: type, 
+                timestamp: Date.now()
+            };
 
-    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-    player.pause();
-    player.src = '';
-    playerContainer.classList.add('hidden');
-  };
+            // Remove item duplicado se já estiver no histórico
+            history = history.filter(h => h.url !== newItem.url);
+            
+            history.unshift(newItem); // Adiciona no início
 
-  // ... (todo o resto do código permanece igual)
-  </script>
-</body>
-</html>
+            // Limita o histórico para os últimos 50 itens (opcional)
+            if (history.length > 50) {
+                history = history.slice(0, 50);
+            }
+            saveHistory(history);
+            if (historySection.classList.contains('flex')) { 
+                renderHistory();
+            }
+        }
+
+        function clearHistory() {
+            if (confirm('Tem certeza que deseja limpar todo o histórico de visualização?')) {
+                localStorage.removeItem('cineblack_history');
+                renderHistory(); 
+            }
+        }
+
+        // --- Funções de Parsing e Agrupamento ---
+        // Otimização de Regex no parseM3U para maior velocidade
+        function parseM3U(text) {
+            const items = [];
+            const vodExt = /\.(mp4|mkv|mov|avi|webm|m3u8)$/i;
+            // Melhoria: Uma única regex para capturar logo, grupo e título
+            const extinfRegex = /#EXTINF:-1(?: tvg-logo="([^"]*)")?(?: group-title="([^"]*)")?,(.*)/;
+
+            const lines = text.split(/\r?\n/);
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (line.startsWith('#EXTINF')) {
+                    const match = line.match(extinfRegex);
+                    if (match) {
+                        const thumb = match[1] || 'https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem';
+                        const group = match[2] || '';
+                        const title = match[3].trim();
+                        const url = lines[i+1]?.trim();
+
+                        if (url && url.startsWith('http') && group.toLowerCase() !== 'ao vivo' && vodExt.test(url)) {
+                            items.push({ title, url, thumb, group });
+                        }
+                    }
+                }
+            }
+            return items;
+        }
+
+        function groupItems(items) {
+            const series = {};
+            const movies = [];
+            items.forEach(item => {
+                // Ajuste no regex para pegar o nome base da série de forma mais robusta para o TMDb
+                const match = item.title.match(/^(.*?)[\s\.-]?[sS](\d+)[eE](\d+)/);
+                if (match) {
+                    const name = match[1].trim();
+                    series[name] = series[name] || [];
+                    series[name].push(item);
+                } else {
+                    movies.push(item);
+                }
+            });
+
+            for (const name in series) {
+                series[name].sort((a, b) => {
+                    const aMatch = a.title.match(/[sS](\d+)[eE](\d+)/);
+                    const bMatch = b.title.match(/[sS](\d+)[eE](\d+)/);
+                    if (!aMatch || !bMatch) return 0;
+                    const sA = parseInt(aMatch[1]);
+                    const eA = parseInt(aMatch[2]);
+                    const sB = parseInt(bMatch[1]);
+                    const eB = parseInt(bMatch[2]);
+
+                    if (sA !== sB) return sA - sB;
+                    return eA - eB;
+                });
+            }
+            return { series, movies };
+        }
+
+        // --- FUNÇÃO PARA BUSCAR DETALHES DA API TMDb ---
+        async function fetchDetailsFromTMDb(title, type = 'movie') { // type: 'movie' ou 'tv' para séries
+            if (!TMDb_API_KEY || TMDb_API_KEY === 'fb0e86e11124588a98eb2e0c5909126c') { // Verifica a chave real
+                console.warn("Chave da TMDb API não configurada corretamente. Detalhes não serão carregados.");
+                return null;
+            }
+
+            // Tenta limpar o título para a busca (remove SXXEXX e ano)
+            let cleanedTitle = title.replace(/[\s\.-]?[sS]\d+[eE]\d+/, '').replace(/\(\d{4}\)/, '').trim();
+            // Decide o endpoint da busca
+            const searchType = (type === 'movie' || type === 'episode') ? 'movie' : 'tv'; // TMDb usa 'tv' para séries
+
+            const searchUrl = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDb_API_KEY}&query=${encodeURIComponent(cleanedTitle)}&language=pt-BR`;
+
+            try {
+                const searchRes = await fetch(searchUrl);
+                const searchData = await searchRes.json();
+
+                if (searchData.results && searchData.results.length > 0) {
+                    const id = searchData.results[0].id;
+                    const detailsUrl = `https://api.themoviedb.org/3/${searchType}/${id}?api_key=${TMDb_API_KEY}&append_to_response=videos,credits&language=pt-BR`;
+                    const detailsRes = await fetch(detailsUrl);
+                    const detailsData = await detailsRes.json();
+
+                    const posterPath = detailsData.poster_path ? `https://image.tmdb.org/t/p/w500${detailsData.poster_path}` : 'https://dummyimage.com/200x300/444/fff.png&text=Sem+Pôster';
+                    const backdropPath = detailsData.backdrop_path ? `https://image.tmdb.org/t/p/w1280${detailsData.backdrop_p
