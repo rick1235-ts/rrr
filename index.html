@@ -132,6 +132,12 @@
         const OMDb_API_KEY = 'fb0e86e11124588a98eb2e0c5909126c'; 
         // --- FIM DA CHAVE ---
 
+        // CONFIGURE A URL DO PROXY AQUI
+        // ATENÇÃO: cors-anywhere.herokuapp.com é um proxy público e pode ter limites ou ser descontinuado.
+        // É ideal para testes e desenvolvimento. Para produção, considere seu próprio proxy ou streams HTTPS.
+        const PROXY_URL = 'https://cors-anywhere.herokuapp.com/'; 
+        // ATENÇÃO: Visite https://cors-anywhere.herokuapp.com/ uma vez antes de usar, para ativar o proxy.
+
         const searchInput = document.getElementById('searchInput');
         const categorySelect = document.getElementById('categorySelect');
         const baixarBtn = document.getElementById('baixarListaBtn');
@@ -240,7 +246,6 @@
         }
 
         // --- Funções de Parsing e Agrupamento ---
-        // parseM3U: A CHAVE DA CORREÇÃO ESTÁ AQUI - REMOVIDO vodExt.test(url)
         function parseM3U(text) {
             const lines = text.split(/\r?\n/);
             const items = [];
@@ -253,8 +258,8 @@
                     const group = (lines[i].match(/group-title="(.*?)"/) || [])[1] || '';
                     const url = lines[i+1]?.trim();
                     
-                    // AQUI ESTÁ A MUDANÇA: Apenas verifica se é uma URL http válida
-                    if (url && url.startsWith('http')) { // REMOVIDO: && vodExt.test(url)
+                    // AQUI ESTÁ A MUDANÇA: Apenas verifica se é uma URL http válida (sem verificar extensão)
+                    if (url && url.startsWith('http')) { 
                         items.push({ title, url, thumb, group });
                     }
                 }
@@ -281,12 +286,13 @@
                     series[name].push(item);
                 } 
                 // 2. Tenta identificar se é TV AO VIVO (por palavras-chave no group-title)
+                // Adicionei os termos exatos que você mostrou na sua lista M3U.
                 else if (groupLower.includes('ao vivo') || 
                            groupLower.includes('live tv') || 
-                           groupLower.includes('canais') || // Termo genérico "canais"
-                           groupLower.includes('abertos') || // Para "CANAIS ABERTOS"
+                           groupLower.includes('canais') || 
+                           groupLower.includes('abertos') || 
                            groupLower.includes('esportes') || 
-                           groupLower.includes('noticias') || // Para grupos de notícias
+                           groupLower.includes('noticias') || 
                            groupLower.includes('documentarios') ||
                            groupLower.includes('infantil') ||
                            groupLower.includes('variedades') ||
@@ -514,9 +520,12 @@
             const savedTimeKey = `time_${item.title}`;
             const savedTime = parseFloat(localStorage.getItem(savedTimeKey)) || 0;
 
-            if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) {
+            // Aplica o proxy para o URL do stream
+            const streamUrl = item.url.startsWith('http') ? PROXY_URL + item.url : item.url; // Adiciona o proxy
+
+            if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) { // Se a URL original tiver .m3u8
                 hlsInstance = new Hls();
-                hlsInstance.loadSource(item.url);
+                hlsInstance.loadSource(streamUrl); // Carrega via proxy
                 hlsInstance.attachMedia(player);
                 hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
                     if (savedTime > 0) {
@@ -525,7 +534,7 @@
                     player.play().catch(() => {});
                 });
             } else {
-                player.src = item.url;
+                player.src = streamUrl; // Carrega via proxy
                 player.addEventListener('loadedmetadata', function resume() {
                     if (savedTime > 0) {
                         player.currentTime = savedTime;
@@ -548,15 +557,18 @@
 
             if (liveHlsInstance) { liveHlsInstance.destroy(); liveHlsInstance = null; }
 
-            if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) {
+            // Aplica o proxy para o URL do stream
+            const streamUrl = item.url.startsWith('http') ? PROXY_URL + item.url : item.url; // Adiciona o proxy
+
+            if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) { // Se a URL original tiver .m3u8
                 liveHlsInstance = new Hls();
-                liveHlsInstance.loadSource(item.url);
+                liveHlsInstance.loadSource(streamUrl); // Carrega via proxy
                 liveHlsInstance.attachMedia(livePlayer);
                 liveHlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
                     livePlayer.play().catch(() => {});
                 });
             } else {
-                livePlayer.src = item.url;
+                livePlayer.src = streamUrl; // Carrega via proxy
                 livePlayer.play().catch(() => {});
             }
 
