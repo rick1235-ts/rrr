@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🍿 CINEBLACK</title>
+    <title>🍿 CINEBLACK - Filmes Online - Series Online - Animes Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel='stylesheet' href='./pobreflix_framework.css' media='all'>
+    <link rel='stylesheet' href='./pobreflix_responsive.css' media='all'>
+    <link rel='stylesheet' href='./pobreflix_videobox.css' media='all'>
+    <link rel='stylesheet' href='./pobreflix_custom.css' media='all'>
+    <link href="https://fonts.googleapis.com/css?family=Poppins:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&amp;subset=devanagari,latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Exo+2:300,400,500,600&display=swap" rel="stylesheet">
+
+
     <style>
         /* Ajuste para o padding do container principal */
         .p-6 {
@@ -20,94 +29,305 @@
         .modal-overlay {
             background-color: rgba(0, 0, 0, 0.8);
         }
-        /* Responsividade para o iframe do YouTube */
-        .video-responsive {
-            overflow: hidden;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
-            position: relative;
-            height: 0;
+        /* Estilos para garantir que o Tailwind não conflite onde o Pobreflix deve dominar */
+        body {
+            font-family: 'Exo 2', 'Poppins', sans-serif !important; /* Prioriza a fonte do Pobreflix */
+            background-color: #000000; /* Garante fundo preto */
         }
-        .video-responsive iframe {
-            left: 0;
-            top: 0;
-            height: 100%;
+        .text-white {
+            color: #fff; /* Garante texto branco */
+        }
+
+        /* Adaptação para o CINEBLACK funcionar com o novo estilo do cabeçalho */
+        #cineblackHeaderNav {
+            display: flex;
+            gap: 1rem; /* Espaçamento entre os botões Filmes e Séries */
+        }
+
+        /* Oculta os títulos originais do CINEBLACK, pois o Pobreflix já tem seus próprios */
+        #moviesSection h2, #seriesSection h2 {
+            display: none;
+        }
+
+        /* Ajustes para o player e modais aparecerem sobre o estilo Pobreflix */
+        #playerContainer, #episodesModal, #detailsModal {
+            z-index: 100; /* Garante que estejam acima de tudo */
+        }
+
+        /* Adaptação para a barra de pesquisa e filtro do CINEBLACK */
+        .cineblack-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+            align-items: center;
+        }
+        @media (min-width: 768px) {
+            .cineblack-controls {
+                flex-direction: row;
+            }
+        }
+        .cineblack-controls input,
+        .cineblack-controls select,
+        .cineblack-controls button {
             width: 100%;
-            position: absolute;
+            max-width: none;
+        }
+        @media (min-width: 768px) {
+            .cineblack-controls input {
+                width: 80%;
+                max-width: 320px;
+            }
+            .cineblack-controls select {
+                width: 60%;
+                max-width: 240px;
+            }
         }
     </style>
 </head>
-<body class="bg-black text-white font-sans min-h-screen flex flex-col">
-    <header class="text-center py-6 bg-gradient-to-r from-blue-700 to-red-500 flex justify-between items-center px-4">
-        <h1 class="text-3xl font-bold">🍿 CINEBLACK</h1>
-        <nav>
-            <button id="showMoviesBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Filmes</button>
-            <button id="showSeriesBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Séries</button>
-            <button id="showHistoryBtn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Histórico</button>
-        </nav>
-    </header>
-
-    <div class="p-6 max-w-7xl mx-auto flex-1 w-full">
-        <div class="flex flex-col md:flex-row gap-4 mb-6 justify-center items-center">
-            <input type="text" id="searchInput" placeholder="Pesquisar..." class="p-3 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-600 w-full md:w-80" />
-            <select id="categorySelect" class="p-3 rounded bg-gray-800 text-white border border-gray-600 w-full md:w-60">
-                <option value="">Todas as Categorias</option>
-            </select>
-            <button id="baixarListaBtn" class="relative bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center justify-center transition-colors">
-                <span id="loadSpinner" class="absolute left-3 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin hidden"></span>
-                📥 CARREGAR LISTA DE CONTEUDO
-            </button>
-            <button id="limparListaBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-0.5 py-0.5 rounded transition-colors">
-                🔄 ATUALIZAR LISTA
-            </button>
-        </div>
-
-        <div id="playerContainer" class="relative mb-10 hidden">
-            <video id="player" controls muted class="w-full max-w-4xl mx-auto block rounded-lg shadow-2xl"></video>
-            <div class="mt-2 flex justify-center gap-4">
-                <button id="prevEpisodeBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">Anterior</button>
-                <button id="nextEpisodeBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">Próximo</button>
-            </div>
-            <button id="closePlayer" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-lg transition-colors">✖</button>
-        </div>
-
-        <div id="moviesSection">
-            <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-center uppercase tracking-wide text-pink-500">
-                🎬 Filmes Disponíveis
-            </h2>
-            <div id="moviesGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <div class="text-center text-gray-400 py-10 col-span-full">
-                    Carregando filmes...
+<body class='ipsApp ipsApp_front ipsJS_has ipsClearfix' data-controller='core.front.core.app' data-message="" data-pageApp='videobox' data-pageLocation='front' data-pageModule='video' data-pageController='index'>
+    <a href='#ipsLayout_mainArea' class='ipsHide' title='Go to main content on this page' accesskey='m'>Jump to content</a>
+    <div id='ipsLayout_header' class='ipsClearfix' style='box-shadow: 0px -8px 30px #000000; z-index: 2;'>
+        <header>
+            <div class='ipsLayout_container'>
+                <div id='yt__acme_header'>
+                    <div class='yt__acme_header__logo'>
+                        <a href='https://pobreflixtv.my/' id='elLogo' accesskey='1'>
+                            <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1155.74 264.43">
+                                <defs>
+                                    <style>
+                                        .cls-1{fill:url(#linear-gradient)}.cls-2,.cls-3{fill:#fff}.cls-3{font-size:146.14px;font-weight:700;letter-spacing:.03em}
+                                    </style>
+                                    <linearGradient id="linear-gradient" x1="1011.61" y1="463.73" x2="1011.61" y2="42.15" gradientUnits="userSpaceOnUse">
+                                        <stop offset="0.29" stop-color="#333"/><stop offset="0.4" stop-color="#4b2b2d"/><stop offset="0.64" stop-color="#88181c"/><stop offset="0.82" stop-color="#ba080f"/>
+                                    </linearGradient>
+                                </defs>
+                                <polygon class="cls-1" points="1055.45 151.33 1029.84 165.38 1073.22 190.84 1047.96 204.71 1022.35 218.77 1022.34 218.77 978.96 193.31 956.06 205.88 956.06 205.88 930.45 219.94 919.14 226.14 919.14 176.52 935.27 167.66 935.28 167.66 960.89 153.61 986.15 139.74 1011.76 125.69 971.7 102.17 994.71 89.54 1020.32 75.48 1060.39 98.99 1104.08 124.64 1078.46 138.69 1055.45 151.33"/>
+                                <path class="cls-2" d="M1110.36,290.4l-24.64,13.53L1060.1,318l-23,12.64-13.24,7.26V267.5a16,16,0,0,1,24-13.76Z" transform="translate(-104.71 -251.52)"/>
+                                <path class="cls-2" d="M1252.57,373.86a16,16,0,0,1-.4,27.75h0l-25.61,14.06-23,12.63-25.61,14.06-43.38-25.46,25.61-14,23-12.64h0a16.58,16.58,0,0,0,.42-28.84l-18.49-10.86L1125,327l24.64-13.52h0L1189.74,337l43.68,25.64Z" transform="translate(-104.71 -251.52)"/>
+                                <polygon class="cls-2" points="1011.76 125.69 986.15 139.74 960.89 153.61 935.28 167.66 935.27 167.66 919.14 176.52 919.14 131.02 920.82 130.09 946.08 116.23 971.7 102.17 1011.76 125.69"/>
+                                <path class="cls-2" d="M1127.05,470.29l-22.9,12.57-25.61,14.06-31,17a16,16,0,0,1-23.64-14V477.66l11.3-6.21,25.61-14.05h0l22.9-12.57Z" transform="translate(-104.71 -251.52)"/>
+                                <text class="cls-3" transform="translate(0 176.17)">POBREFLIX</text>
+                            </svg>
+                        </a>
+                    </div>
+                    <div class='yt__acme_header__social'></div>
+                    <div class='yt__acme_header__userpanel'>
+                        <ul id='elUserNav' class='ipsList_inline cSignedOut ipsResponsive_showDesktop'>
+                            <li>
+                                <a id='elRegisterButton' onclick='guests();' class='ipsButton ipsButton_normal ipsButton_primary'>Registrar</a>
+                            </li>
+                        </ul>
+                        <ul class='ipsMobileHamburger ipsList_reset ipsResponsive_hideDesktop'>
+                            <li data-ipsDrawer data-ipsDrawer-drawerElem='#elMobileDrawer'>
+                                <a href='#'>
+                                    <i class='fa fa-navicon'></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-        </div>
+        </header>
 
-        <div id="seriesSection" class="hidden">
-            <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-center uppercase tracking-wide text-pink-500 mt-10">
-                📺 Séries Disponíveis
-            </h2>
-            <div id="seriesGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <div class="text-center text-gray-400 py-10 col-span-full">
-                    Carregando séries...
-                </div>
+        <div id='yt__acme_nav' class='yt__acme_nav_nosubnav ' style='margin-bottom: 0;'>
+            <div class='ipsLayout_container'>
+                <nav data-controller='core.front.core.navBar'>
+                    <div class='ipsNavBar_primary'>
+                        <div id="elSearchWrapper">
+                            <div id='elSearch'>
+                                <form accept-charset='utf-8' action='https://pobreflixtv.my/pesquisar/' method='get'>
+                                    <input type='search' placeholder='Pesquisar...' name='p' autocomplete='off' aria-label='Search'>
+                                    <button class='cSearchSubmit' type="submit" aria-label='Search'><i class="fa fa-search"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                        <ul id='yt__acme_nav__primary' data-role="primaryNavBar">
+                            <li id='elNavSecondary_56' data-role="navBarItem" data-navApp="core" data-navExt="CustomItem">
+                                <a href="javascript:void(0);" data-navItem-id="56" onclick="showSection(moviesSection);">Início</a>
+                            </li>
+                            <li id='elNavSecondary_17' data-role="navBarItem" data-navApp="core" data-navExt="Menu">
+                                <a href="#" id="elNavigation_17" data-ipsMenu data-ipsMenu-appendTo='#elNavSecondary_17' data-ipsMenu-activeClass='ipsNavActive_menu' data-navItem-id="17" onclick="showSection(moviesSection);">Filmes <i class="fa fa-caret-down"></i></a>
+                                <ul id="elNavigation_17_menu" class="ipsMenu ipsMenu_auto ipsHide fix">
+                                    <li class='ipsMenu_item'><a href="javascript:void(0);" onclick="categorySelect.value=''; filterItems(); showSection(moviesSection);">Todos os Filmes</a></li>
+                                    </ul>
+                            </li>
+                            <li id='elNavSecondary_38' data-role="navBarItem" data-navApp="core" data-navExt="Menu">
+                                <a href="#" id="elNavigation_38" data-ipsMenu data-ipsMenu-appendTo='#elNavSecondary_38' data-ipsMenu-activeClass='ipsNavActive_menu' data-navItem-id="38" onclick="showSection(seriesSection);">Séries <i class="fa fa-caret-down"></i></a>
+                                <ul id="elNavigation_38_menu" class="ipsMenu ipsMenu_auto ipsHide fix">
+                                    <li class='ipsMenu_item'><a href="javascript:void(0);" onclick="categorySelect.value=''; filterItems(); showSection(seriesSection);">Todas as Séries</a></li>
+                                    </ul>
+                            </li>
+                            <li id='elNavSecondary_57' data-role="navBarItem" data-navApp="core" data-navExt="CustomItem">
+                                <a href="javascript:void(0);" data-navItem-id="57">Pedidos</a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
             </div>
         </div>
-
-        <div id="historySection" class="hidden">
-            <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-center uppercase tracking-wide text-pink-500 mt-10">
-                🕒 Histórico de Visualização
-            </h2>
-            <button id="clearHistoryBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md mb-6 transition-colors">Limpar Histórico</button>
-            <div id="historyGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <div class="text-center text-gray-400 py-10 col-span-full">
-                    Histórico vazio. Comece a assistir!
+        <ul id='elMobileNav' class='ipsResponsive_hideDesktop cel' data-controller='core.front.core.mobileNav'>
+            <div id="elSearchWrapper">
+                <div id='elSearch' class="celtwo">
+                    <form accept-charset='utf-8' action='https://pobreflixtv.my/pesquisar/' method='get'>
+                        <input type='search' placeholder='Pesquisar...' name='p' autocomplete='off' aria-label='Search'>
+                        <button class='cSearchSubmit' type="submit" aria-label='Search'><i class="fa fa-search"></i></button>
+                    </form>
                 </div>
             </div>
-        </div>
+        </ul>
     </div>
+
+    <div id="launcherBg" style="background-image:url(https://image.tmdb.org/t/p/w780/kQdyZtEo4iBjoJ82SX5oTCoRwjR.jpg);background-position:center 25%" class="enabled" loading="lazy">
+        <section id="homeLauncher">
+            <div class="infos">
+                <img class="movieLogo" src="https://image.tmdb.org/t/p/w200/mzWwfNCUGsTxDI9hG5aohBgRLlj.png" alt="Assistir The Last of Us Online Gratis" loading="lazy">
+                <div class="options">
+                    <a href="javascript:void(0);" class="coolButton orange" onclick="alert('Funcionalidade de assistir série aqui, ou link para o CINEBLACK');">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 511.03 511.03"><path d="M416.809 200.418L152.282 14.389C130.151-.972 107.89-4.358 89.145 5.798c-17.054 8.591-27.338 29.03-27.338 54.676v390.802c0 25.646 10.284 46.084 27.338 54.676c6.769 3.385 13.669 5.077 22.131 5.077 11.977 0 27.338-5.077 41.007-11.977L416.81 313.023c20.439-13.669 32.414-34.107 32.414-56.368-.001-22.259-11.977-42.698-32.415-56.237zm-20.568 83.575L131.714 470.022c-10.284 8.591-20.439 10.285-27.338 6.769-6.769-3.385-10.284-13.669-10.284-25.646V60.344c0-13.669 3.385-22.13 10.284-25.646 1.692-1.692 5.077-1.692 6.769-1.692 5.077 0 13.669 1.692 22.13 8.591l264.527 186.029c10.284 6.769 17.054 17.053 17.054 27.338.261 10.285-6.639 20.438-18.615 29.029z"></path></svg>
+                        Assistir Série
+                    </a>
+                    <div class="ipsResponsive_hidePhone ipsResponsive_hideTablet" style="display: inline-block;">
+                        <a onclick="guests();" class="coolButton gray bookmark">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 294.843 294.843"><g fill="#FFF"><path d="M212.921 0h-131a6 6 0 0 0-6 6v282.843a6 6 0 0 0 9.73 4.699l65.491-51.992a6 6 0 1 0-7.461-9.399L87.92 276.418V12h119v264.421l-26.771-21.247a6 6 0 0 0-7.459 9.4l36.501 28.969a6.002 6.002 0 0 0 9.73-4.7V6a6 6 0 0 0-6-6z"></path><path d="M102.921 35.755h89a6 6 0 0 0 0-12h-89a6 6 0 0 0 0 12zM102.921 59.409h89a6 6 0 0 0 0-12h-89a6 6 0 0 0 0 12zM165.421 71.063h-62.5a6 6 0 0 0 0 12h62.5a6 6 0 0 0 0-12z"></path></g></svg>
+                            Adicionar à lista
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <main id='ipsLayout_body' class='ipsLayout_container'>
+        <div id='ipsLayout_contentArea'>
+            <div id='ipsLayout_contentWrapper'>
+                <div id='ipsLayout_mainArea'>
+
+                    <div class="p-6 max-w-7xl mx-auto w-full">
+                        <div class="cineblack-controls">
+                            <input type="text" id="searchInput" placeholder="Pesquisar..." class="p-3 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-600" />
+                            <select id="categorySelect" class="p-3 rounded bg-gray-800 text-white border border-gray-600">
+                                <option value="">Todas as Categorias</option>
+                            </select>
+                            <button id="baixarListaBtn" class="relative bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center justify-center transition-colors">
+                                <span id="loadSpinner" class="absolute left-3 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin hidden"></span>
+                                📥 CARREGAR LISTA DE CONTEUDO
+                            </button>
+                            <button id="limparListaBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-0.5 py-0.5 rounded transition-colors">
+                                🔄 ATUALIZAR LISTA
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="playerContainer" class="relative mb-10 hidden">
+                        <video id="player" controls muted class="w-full max-w-4xl mx-auto block rounded-lg shadow-2xl"></video>
+                        <div class="mt-2 flex justify-center gap-4">
+                            <button id="prevEpisodeBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">Anterior</button>
+                            <button id="nextEpisodeBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">Próximo</button>
+                        </div>
+                        <button id="closePlayer" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-lg transition-colors">✖</button>
+                    </div>
+
+                    <div id="moviesSection">
+                        <div class='cWidgetContainer' data-role='widgetReceiver' data-orientation='horizontal' data-widgetArea='header'>
+                            <ul class='ipsList_reset'>
+                                <li class='ipsWidget ipsWidget_horizontal ipsBox'>
+                                    <div id="vbTabSlider_movies" class="cj9cxx4vo" data-controller="plugins.vbTabSlider" data-ajax="true">
+                                        <div class='vbTab-list ipsClearfix header'>
+                                            <nav>
+                                                <ul class='etabs ipsPos_left'>
+                                                    <span class="main"><i class="fa fa-bars" aria-hidden="true"></i> Filmes</span>
+                                                    <li class="tab active" data-tabName='releases' data-widgetKey='cj9cxx4vo'><span>Lançamentos</span></li>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                        <div class='vbPanel-container releases_cj9cxx4vo_html' style='height: auto;'>
+                                            <div class='vbTabSliderContainer'>
+                                                <div id="moviesGrid" class='videoSliderWrapper'>
+                                                    <div class="text-center text-gray-400 py-10 col-span-full">
+                                                        Carregando filmes...
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div id="seriesSection" class="hidden">
+                        <div class='cWidgetContainer' data-role='widgetReceiver' data-orientation='horizontal' data-widgetArea='footer'>
+                            <ul class='ipsList_reset'>
+                                <li class='ipsWidget ipsWidget_horizontal ipsBox'>
+                                    <div id="vbTabSlider_series" class="tife5lkci" data-controller="plugins.vbTabSlider" data-ajax="true">
+                                        <div class='vbTab-list ipsClearfix header'>
+                                            <nav>
+                                                <ul class='etabs ipsPos_left'>
+                                                    <span class="main"><i class="fa fa-bars" aria-hidden="true"></i> Séries</span>
+                                                    <li class="tab active" data-tabName='releases' data-widgetKey='tife5lkci'><span>Novos Episódios</span></li>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                        <div class='vbPanel-container releases_tife5lkci_html' style='height: auto;'>
+                                            <div class='vbTabSliderContainer'>
+                                                <div id="seriesGrid" class='videoSliderWrapper'>
+                                                    <div class="text-center text-gray-400 py-10 col-span-full">
+                                                        Carregando séries...
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="wrap"><h1 class="h3Words">Filmes Online Grátis - Series Online - Animes Online</h1></div>
+    <div id="footerInfos"><span>Filmes Online - Assistir Filmes - Filmes Online Grátis</span><p>Filmes Online - Assistir Filmes Online - Filmes Online Grátis - Filmes Completos Dublados<br>A Pobreflix HD é uma plataforma de site e aplicativo para assistir filmes x series online grátis!O nosso site atualiza todas as séries no dia em legendado e dublado, e como o nosso site é um indexador automático, somos os mais rápidos postadores do Brasil.Pobreflix HD não armazena mega filmes e series em nosso site, por isso é completamente dentro da lei. A Pobreflix HD indexa conteudo encontrado na web automáticamente usando Robots e Inteligência artificial.O uso da Pobreflix HD é totalmente responsabilidade do usuário. A distribuição de filmes é da parte de plataformas como mystream, fembed entre outros. Qualquer violação de direitos autorais, entre em contato com o distribuidor.Em caso de dúvidas ou reclamações sobre conteúdo, funcionalidade do site, anúncios entre outros, entre em contato com a equipe de suporte.</p></div>
+    <footer id='ipsLayout_footer' class='ipsClearfix'>
+        <div class='ipsLayout_container'></div>
+        <div class='yt__acme_footer_top'>
+            <div class='ipsLayout_container'>
+                <div class='yt__acme_footer_top_content'>
+                    <div class='yt__acme_footer_top_content_aboutus'>
+                        <div><b>AVISO LEGAL:</b> Nós não armazenamos nenhum dos arquivos em nenhum servidor. Todos os conteúdos são fornecidos por terceiros sem qualquer tipo de filiação.</div>
+                        <br>
+                    </div>
+                    <div class='yt__acme_footer_top_content_mainmenu'>
+                        <h2 class='yt__acme_footer_top_content_title'>Informações</h2>
+                        <p class='yt__acme_footer_top_content_description'>Importante</p>
+                        <div class='yt__acme_footer_top_content_mainmenu__list'>
+                            <p><a href="javascript:void(0);" rel="">Politica DMCA</a></p>
+                            <p><a href="javascript:void(0);" rel="">Termos e condições</a></p>
+                        </div>
+                    </div>
+                    <div class='yt__acme_footer_top_content_usefullink'>
+                        <h2 class='yt__acme_footer_top_content_title'>Parceiros</h2>
+                        <p class='yt__acme_footer_top_content_description'>Contate-nos</p>
+                        <div class='yt__acme_footer_top_content_usefullink__list'>
+                            <p><a title="Overflix" target="_BLANK" href="https://overflixtv.run/" rel="follow">Overflix</a></p>
+                            <p><a title="Vizer" target="_BLANK" href="https://vizertv.fit/" rel="follow">Vizer</a></p>
+                            <p><a title="Pobreflix" target="_BLANK" href="https://pobreflixtv.my/" rel="follow">Pobreflix</a></p>
+                            <p><a title="RedeCanais" target="_BLANK" href="https://redecanaishd.my/" rel="follow">RedeCanais</a></p>
+                            <p><a title="MegaFilmes" target="_BLANK" href="https://megafilmeshd50.my/" rel="follow">MegaFilmes</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <div id="episodesModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
         <div class="bg-gray-900 rounded-xl p-6 max-w-lg w-full relative">
-            <button id="closeModal" class="absolute top-3 right-3 text-white text-2xl font-bold">×</button>
+            <button id="closeModal" class="absolute top-3 right-3 text-white text-2xl font-bold">&times;</button>
             <h3 id="modalTitle" class="text-xl font-bold mb-4">Episódios</h3>
             <div id="episodesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
         </div>
@@ -115,7 +335,7 @@
 
     <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 modal-overlay">
         <div class="bg-gray-900 rounded-xl p-6 max-w-2xl w-full relative mx-4 max-h-[90vh] overflow-y-auto">
-            <button id="closeDetailsModal" class="absolute top-3 right-3 text-white text-2xl font-bold">×</button>
+            <button id="closeDetailsModal" class="absolute top-3 right-3 text-white text-2xl font-bold">&times;</button>
             <div class="flex flex-col md:flex-row gap-6">
                 <img id="detailPoster" src="https://dummyimage.com/200x300/444/fff.png&text=Carregando..." alt="Pôster" class="w-full md:w-1/3 rounded-lg object-cover flex-shrink-0" onerror="this.src='https://dummyimage.com/200x300/444/fff.png&text=Sem+Pôster'"/>
                 <div class="flex-1">
@@ -123,40 +343,63 @@
                     <p id="detailYearGenre" class="text-gray-400 text-sm mb-3">Ano | Gênero</p>
                     <p id="detailPlot" class="text-gray-300 text-base mb-4">Carregando sinopse...</p>
                     <p id="detailActors" class="text-gray-400 text-sm mb-2"><strong>Elenco:</strong> Carregando...</p>
-                    <p id="detailDirector" class="text-gray-400 text-sm mb-2"><strong>Diretor:</strong> Carregando...</p>
-                    <p id="detailRating" class="text-gray-400 text-sm mb-4"><strong>Avaliação:</strong> Carregando...</p>
-                    <div class="flex flex-col sm:flex-row gap-4 mt-4">
-                        <button id="playMovieButton" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-semibold w-full sm:w-1/2 transition-colors flex items-center justify-center">
-                            ▶️ Assistir
-                        </button>
-                        <button id="viewTrailerButton" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg text-lg font-semibold w-full sm:w-1/2 transition-colors flex items-center justify-center hidden">
-                            ▶️ Ver Trailer
-                        </button>
-                    </div>
+                    <p id="detailRating" class="text-gray-400 text-sm mb-4"><strong>Avaliação IMDb:</strong> Carregando...</p>
+                    <button id="playMovieButton" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-semibold w-full transition-colors flex items-center justify-center">
+                        ▶️ Assistir
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="trailerModal" class="fixed inset-0 bg-black bg-opacity-90 hidden items-center justify-center z-[100] modal-overlay">
-        <div class="bg-gray-900 rounded-lg p-4 max-w-4xl w-full relative mx-4">
-            <button id="closeTrailerModal" class="absolute top-2 right-2 text-white text-3xl font-bold">×</button>
-            <div class="video-responsive">
-                <iframe id="youtubePlayer" width="560" height="315" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <div id='elMobileDrawer' class='ipsDrawer ipsHide'>
+        <div class='ipsDrawer_menu'>
+            <a href='#' class='ipsDrawer_close' data-action='close'><span>&times;</span></a>
+            <div class='ipsDrawer_content ipsFlex ipsFlex-fd:column'>
+                <div class='ipsPadding ipsBorder_bottom'>
+                    <ul class='ipsToolList ipsToolList_vertical'>
+                        <li><a onclick='guests();' id='elRegisterButton_mobile' class='ipsButton ipsButton_small ipsButton_fullWidth ipsButton_important'>Registrar</a></li>
+                    </ul>
+                </div>
+                <ul class='ipsDrawer_list ipsFlex-flex:11'>
+                    <li><a href='javascript:void(0);' onclick='showSection(moviesSection); document.getElementById("closeMobileDrawer").click();'>Início</a></li>
+                    <li class='ipsDrawer_itemParent'>
+                        <h4 class='ipsDrawer_title'><a href='javascript:void(0);' onclick='showSection(moviesSection); document.getElementById("closeMobileDrawer").click();'>Filmes</a></h4>
+                        <ul class='ipsDrawer_list'>
+                            <li data-action="back"><a href='#'>Voltar</a></li>
+                            <li><a href='javascript:void(0);' onclick="categorySelect.value=''; filterItems(); showSection(moviesSection); document.getElementById('closeMobileDrawer').click();">Todos os Filmes</a></li>
+                        </ul>
+                    </li>
+                    <li class='ipsDrawer_itemParent'>
+                        <h4 class='ipsDrawer_title'><a href='javascript:void(0);' onclick='showSection(seriesSection); document.getElementById("closeMobileDrawer").click();'>Séries</a></h4>
+                        <ul class='ipsDrawer_list'>
+                            <li data-action="back"><a href='#'>Voltar</a></li>
+                            <li><a href='javascript:void(0);' onclick="categorySelect.value=''; filterItems(); showSection(seriesSection); document.getElementById('closeMobileDrawer').click();">Todas as Séries</a></li>
+                        </ul>
+                    </li>
+                    <li><a href='javascript:void(0);'>Pedidos</a></li>
+                </ul>
             </div>
         </div>
     </div>
+    <div id='elMobileCreateMenuDrawer' class='ipsDrawer ipsHide'></div>
 
-    <footer class="text-center text-gray-400 p-4 text-sm mt-auto">
-        © 2025 - UMA IDEIA QUE NASCEU NOS CORREDORES DO IFBA
-    </footer>
-
+    <script type="text/javascript">!function(e,n,t){"use strict";var o='https://fonts.googleapis.com/css?family=Exo 2:300,400,500,600, https://fonts.googleapis.com/css?family=Exo 2:300,400,500,600,',r="__3perf_googleFontsStylesheet";function c(e){(n.head||n.body).appendChild(e)}function a(){var e=n.createElement("link");e.href=o,e.rel="stylesheet",c(e)}function f(e){if(!n.getElementById(r)){var t=n.createElement("style");t.id=r,c(t)}n.getElementById(r).innerHTML=e}e.FontFace&&e.FontFace.prototype.hasOwnProperty("display")?(t[r]&&f(t[r]),fetch(o).then(function(e){return e.text()}).then(function(e){return e.replace(/@font-face {/g,"@font-face{font-display:swap;")}).then(function(e){return t[r]=e}).then(f).catch(a)):a()}(window,document,localStorage);</script>
+    <script type="text/javascript">jQuery(document).ready(function($){$("a[href='#top']").click(function(){$("html, body").animate({scrollTop:0},"slow");return false;});});</script>
+    <script type='text/javascript'>var ipsDebug=false;var CKEDITOR_BASEPATH='//pobreflixtv.my/applications/core/interface/ckeditor/ckeditor/';var ipsSettings={cookie_path:"/",cookie_prefix:"ips4_",cookie_ssl:true,upload_imgURL:"",message_imgURL:"",notification_imgURL:"",baseURL:"//pobreflixtv.my/",jsURL:"//pobreflixtv.my/applications/core/interface/js/js.php",csrfKey:"e413fdff84c98ef07e1f653c7bf5eb84",antiCache:"4e52a1ea3c1749176630",jsAntiCache:"4e52a1ea3c1749210841",disableNotificationSounds:true,useCompiledFiles:true,links_external:true,memberID:0,lazyLoadEnabled:true,blankImg:"https://pobreflixtv.my/applications/core/interface/js/spacer.png",googleAnalyticsEnabled:false,matomoEnabled:false,viewProfiles:false,mapProvider:'none',mapApiKey:'',pushPublicKey:null,relativeDates:true};ipsSettings['maxImageDimensions']={width:1000,height:750};</script>
+    <script type='text/javascript' src='https://pobreflixtv.my/uploads/javascript_global/root_library.js?v=4e52a1ea3c1749210841' data-ips></script>
+    <script type='text/javascript' src='https://pobreflixtv.my/uploads/javascript_global/root_js_lang_1.js?v=4e52a1ea3c1749210841' data-ips></script>
+    <script type='text/javascript' src='https://pobreflixtv.my/uploads/javascript_global/root_framework.js?v=4e52a1ea3c1749210841' data-ips></script>
+    <script type='text/javascript' src='https://pobreflixtv.my/uploads/javascript_core/plugins_plugins.js?v=4e52a1ea3c1749210841' data-ips></script>
+    <script type='text/javascript' src='https://pobreflixtv.my/uploads/javascript_global/root_front.js?v=4e52a1ea3c1749210841' data-ips></script>
+    <script>function guests(a){ips.ui.alert.show({type:'confirm',icon:'warning',message:'Ainda não é registrado?',subText:'Essa função exige que você seja registrado na Encontrei TV. Deseja fazer isso? É de graça!',callbacks:{ok:function(){$(location).prop('href','https://encontre.tv/register/')}}});}</script>
+    <script>$(document).ready(function(){$(".pss a").click(function(b){b.preventDefault(),$(this).parent().addClass("current"),$(this).parent().siblings().removeClass("current");var a=$(this).attr("href");$(".menust").not(a).css("display","none"),$(a).fadeIn()})}),$(document).ready(function(){$(".tsll a").click(function(b){b.preventDefault(),$(this).parent().addClass("current"),$(this).parent().siblings().removeClass("current");var a=$(this).attr("href");$(".data-content").not(a).css("display","none"),$(a).fadeIn()})}),$(document).ready(function(){$(".player-menu a").click(function(b){b.preventDefault(),$(this).parent().addClass("current"),$(this).parent().siblings().removeClass("current");var a=$(this).attr("href");$(".player-content").not(a).css("display","none"),$(a).fadeIn()})}),function(a){a(document).ready(function(){function b(d,a,b){var e,h,c,f,i,g;if(d/=255,a/=255,b/=255,c=Math.max(d,a,b),f=Math.min(d,a,b),i=(c+f)/2,c==f)e=h=0;else{switch(g=c-f,h=i>.5?g/(2-c-f):g/(c+f),c){case d:e=(a-b)/g+(b>a?6:0);break;case a:e=(b-d)/g+2;break;case b:e=(d-a)/g+4}e/=6}return i}a("#cssmenu li.has-sub>a").on("click",function(){a(this).removeAttr("href");var b=a(this).parent("li");b.hasClass("open")?(b.removeClass("open"),b.find("li").removeClass("open"),b.find("ul").slideUp()):(b.addClass("open"),b.children("ul").slideDown(),b.siblings("li").children("ul").slideUp(),b.siblings("li").removeClass("open"),b.siblings("li").find("li").removeClass("open"),b.siblings("li").find("ul").slideUp())}),a("#cssmenu>ul>li.has-sub>a").append('<span class="holder"></span>'),function(){var d,e,f,c=a("#cssmenu").css("color"),g;c=c.slice(4),d=c.slice(0,c.indexOf(",")),c=c.slice(c.indexOf(" ")+1),e=c.slice(0,c.indexOf(",")),c=c.slice(c.indexOf(" ")+1),f=c.slice(0,c.indexOf(")")),g=b(d,e,f),g>.7?(a("#cssmenu>ul>li>a").css("",""),a("#cssmenu>ul>li>a>span").css("border-color","rgba(90, 152, 179, 1)")):(a("#cssmenu>ul>li>a").css("",""),a("#cssmenu>ul>li>a>span").css("border-color","rgba(90, 152, 179, 1)"))}()})}(jQuery)</script>
+    <script>function myFunction(){var dots=document.getElementById("dots");var moreText=document.getElementById("more");var btnText=document.getElementById("myBtn");if(dots.style.display==="none"){dots.style.display="inline";btnText.innerHTML="Ler mais...";moreText.style.display="none";}else{dots.style.display="none";btnText.innerHTML="";moreText.style.display="inline";}}</script>
+    <script>function down(value){ips.ui.alert.show({type:'alert',icon:'warning',message:'AVISO!',subText:'Você será redirecionado. Clique no ícone de download (seta para baixo) e escolha uma opção para baixar.',callbacks:{ok:function(){window.location.href=value;}}});}</script>
+    <script>if(ips.utils.cookie.get('discord_link')=="true"){ips.utils.cookie.unset('discord_link');}$(document).ready(function(){if(ips.utils.cookie.get('discord_link')!=="7"){ips.utils.cookie.set('discord_link','7','16-Jun-2025 18:00:00 GMT');ips.ui.alert.show({type:'alert',icon:'warning',message:'Participe do nosso Discord!',subText:'Esse é o nosso principal meio de contato com você. Participe do nosso servidor para não perder nenhum aviso!',callbacks:{ok:function(){window.open("https://bit.ly/3zYhlnX",'_blank');}}});}});</script>
     <script>
-        // --- CHAVE DA TMDb API ---
-        // SUA CHAVE DA TMDb API (v3 - API Read Access Token)
-        // Obtenha uma em themoviedb.org/signup -> Settings -> API
-        const TMDb_API_KEY = 'fb0e86e11124588a98eb2e0c5909126c'; 
-        // --- FIM DA CHAVE ---
+        // --- CHAVE DA OMDb API ---
+        const OMDb_API_KEY = 'SUA_CHAVE_AQUI'; // ATENÇÃO: SUBSTITUA PELA SUA CHAVE REAL DA OMDb API!
 
         const searchInput = document.getElementById('searchInput');
         const categorySelect = document.getElementById('categorySelect');
@@ -176,14 +419,11 @@
         // Elementos para seções
         const moviesSection = document.getElementById('moviesSection');
         const seriesSection = document.getElementById('seriesSection');
-        const historySection = document.getElementById('historySection'); 
-        const showMoviesBtn = document.getElementById('showMoviesBtn');
-        const showSeriesBtn = document.getElementById('showSeriesBtn');
-        const showHistoryBtn = document.getElementById('showHistoryBtn'); 
+        // showMoviesBtn e showSeriesBtn agora são os links no cabeçalho do Pobreflix
+        // const showMoviesBtn = document.getElementById('showMoviesBtn'); // Removido, usar os links do Pobreflix
+        // const showSeriesBtn = document.getElementById('showSeriesBtn'); // Removido, usar os links do Pobreflix
         const moviesGrid = document.getElementById('moviesGrid');
         const seriesGrid = document.getElementById('seriesGrid');
-        const historyGrid = document.getElementById('historyGrid');     
-        const clearHistoryBtn = document.getElementById('clearHistoryBtn'); 
 
         // Elementos do Modal de Detalhes
         const detailsModal = document.getElementById('detailsModal');
@@ -193,17 +433,10 @@
         const detailYearGenre = document.getElementById('detailYearGenre');
         const detailPlot = document.getElementById('detailPlot');
         const detailActors = document.getElementById('detailActors');
-        const detailDirector = document.getElementById('detailDirector'); 
         const detailRating = document.getElementById('detailRating');
         const playMovieButton = document.getElementById('playMovieButton');
-        const viewTrailerButton = document.getElementById('viewTrailerButton'); 
 
-        // Elementos do Modal de Trailer
-        const trailerModal = document.getElementById('trailerModal');
-        const closeTrailerModal = document.getElementById('closeTrailerModal');
-        const youtubePlayer = document.getElementById('youtubePlayer');
-
-        let allItems = []; 
+        let allItems = [];
         let filteredItems = [];
 
         let moviesToDisplay = [];
@@ -214,10 +447,10 @@
         let currentSeriesName = null;
         let currentSeriesEps = [];
         let currentEpIndex = null;
-        let currentPlayItem = null; 
+        let currentPlayItem = null;
 
         const dbName = 'RykelmyFilmesDB';
-        const dbVersion = 2; // Versão do IndexedDB
+        const dbVersion = 2;
         const storeName = 'm3uStore';
 
         // --- Funções de IndexedDB ---
@@ -263,76 +496,20 @@
             return tx.complete;
         }
 
-        // --- Funções de Histórico (LocalStorage) ---
-        function getHistory() {
-            try {
-                return JSON.parse(localStorage.getItem('cineblack_history') || '[]');
-            } catch (e) {
-                console.error("Erro ao parsear histórico do localStorage:", e);
-                return [];
-            }
-        }
-
-        function saveHistory(history) {
-            localStorage.setItem('cineblack_history', JSON.stringify(history));
-        }
-
-        function addToHistory(item, type = 'movie') { 
-            let history = getHistory();
-            const newItem = {
-                title: item.title,
-                url: item.url,
-                thumb: item.thumb,
-                group: item.group,
-                type: type, 
-                timestamp: Date.now()
-            };
-
-            // Remove item duplicado se já estiver no histórico
-            history = history.filter(h => h.url !== newItem.url);
-            
-            history.unshift(newItem); // Adiciona no início
-
-            // Limita o histórico para os últimos 50 itens (opcional)
-            if (history.length > 50) {
-                history = history.slice(0, 50);
-            }
-            saveHistory(history);
-            if (historySection.classList.contains('flex')) { 
-                renderHistory();
-            }
-        }
-
-        function clearHistory() {
-            if (confirm('Tem certeza que deseja limpar todo o histórico de visualização?')) {
-                localStorage.removeItem('cineblack_history');
-                renderHistory(); 
-            }
-        }
-
         // --- Funções de Parsing e Agrupamento ---
-        // Otimização de Regex no parseM3U para maior velocidade
         function parseM3U(text) {
+            const lines = text.split(/\r?\n/);
             const items = [];
             const vodExt = /\.(mp4|mkv|mov|avi|webm|m3u8)$/i;
-            // Melhoria: Uma única regex para capturar logo, grupo e título
-            const extinfRegex = /#EXTINF:-1(?: tvg-logo="([^"]*)")?(?: group-title="([^"]*)")?,(.*)/;
-
-            const lines = text.split(/\r?\n/);
 
             for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                if (line.startsWith('#EXTINF')) {
-                    const match = line.match(extinfRegex);
-                    if (match) {
-                        const thumb = match[1] || 'https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem';
-                        const group = match[2] || '';
-                        const title = match[3].trim();
-                        const url = lines[i+1]?.trim();
-
-                        if (url && url.startsWith('http') && group.toLowerCase() !== 'ao vivo' && vodExt.test(url)) {
-                            items.push({ title, url, thumb, group });
-                        }
+                if (lines[i].startsWith('#EXTINF')) {
+                    const title = (lines[i].match(/,(.*)/) || [])[1]?.trim();
+                    const thumb = (lines[i].match(/tvg-logo="(.*?)"/) || [])[1] || 'https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem';
+                    const group = (lines[i].match(/group-title="(.*?)"/) || [])[1] || '';
+                    const url = lines[i+1]?.trim();
+                    if (url && url.startsWith('http') && group.toLowerCase() !== 'ao vivo' && vodExt.test(url)) {
+                        items.push({ title, url, thumb, group });
                     }
                 }
             }
@@ -343,7 +520,6 @@
             const series = {};
             const movies = [];
             items.forEach(item => {
-                // Ajuste no regex para pegar o nome base da série de forma mais robusta para o TMDb
                 const match = item.title.match(/^(.*?)[\s\.-]?[sS](\d+)[eE](\d+)/);
                 if (match) {
                     const name = match[1].trim();
@@ -371,29 +547,435 @@
             return { series, movies };
         }
 
-        // --- FUNÇÃO PARA BUSCAR DETALHES DA API TMDb ---
-        async function fetchDetailsFromTMDb(title, type = 'movie') { // type: 'movie' ou 'tv' para séries
-            if (!TMDb_API_KEY || TMDb_API_KEY === 'fb0e86e11124588a98eb2e0c5909126c') { // Verifica a chave real
-                console.warn("Chave da TMDb API não configurada corretamente. Detalhes não serão carregados.");
+        // --- FUNÇÃO PARA BUSCAR DETALHES DA API OMDb ---
+        async function fetchDetailsFromOMDb(title, type = 'movie') {
+            if (!OMDb_API_KEY || OMDb_API_KEY === 'SUA_CHAVE_AQUI') {
+                console.warn("Chave da OMDb API não configurada. Detalhes não serão carregados.");
                 return null;
             }
-
-            // Tenta limpar o título para a busca (remove SXXEXX e ano)
+            let yearMatch = title.match(/\((\d{4})\)/);
+            let year = yearMatch ? yearMatch[1] : '';
             let cleanedTitle = title.replace(/[\s\.-]?[sS]\d+[eE]\d+/, '').replace(/\(\d{4}\)/, '').trim();
-            // Decide o endpoint da busca
-            const searchType = (type === 'movie' || type === 'episode') ? 'movie' : 'tv'; // TMDb usa 'tv' para séries
 
-            const searchUrl = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDb_API_KEY}&query=${encodeURIComponent(cleanedTitle)}&language=pt-BR`;
+            const url = `https://www.omdbapi.com/?apikey=${OMDb_API_KEY}&t=${encodeURIComponent(cleanedTitle)}&type=${type}&y=${year}&plot=full&r=json`;
 
             try {
-                const searchRes = await fetch(searchUrl);
-                const searchData = await searchRes.json();
+                const response = await fetch(url);
+                const data = await response.json();
 
-                if (searchData.results && searchData.results.length > 0) {
-                    const id = searchData.results[0].id;
-                    const detailsUrl = `https://api.themoviedb.org/3/${searchType}/${id}?api_key=${TMDb_API_KEY}&append_to_response=videos,credits&language=pt-BR`;
-                    const detailsRes = await fetch(detailsUrl);
-                    const detailsData = await detailsRes.json();
+                if (data.Response === "True") {
+                    return {
+                        title: data.Title,
+                        year: data.Year,
+                        genre: data.Genre,
+                        plot: data.Plot !== "N/A" ? data.Plot : "Sinopse não disponível.",
+                        poster: data.Poster !== "N/A" ? data.Poster : 'https://dummyimage.com/200x300/444/fff.png&text=Sem+Pôster',
+                        actors: data.Actors !== "N/A" ? data.Actors : "Informação não disponível.",
+                        imdbRating: data.imdbRating !== "N/A" ? data.imdbRating : "N/A",
+                    };
+                } else {
+                    console.warn(`Detalhes para "${title}" não encontrados na OMDb: ${data.Error}`);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Erro ao buscar detalhes na OMDb:", error);
+                return null;
+            }
+        }
 
-                    const posterPath = detailsData.poster_path ? `https://image.tmdb.org/t/p/w500${detailsData.poster_path}` : 'https://dummyimage.com/200x300/444/fff.png&text=Sem+Pôster';
-                    const backdropPath = detailsData.backdrop_path ? `https://image.tmdb.org/t/p/w1280${detailsData.backdrop_p
+        // --- Funções de Renderização Geral ---
+        function renderContent() {
+            const { series, movies } = groupItems(filteredItems);
+            moviesToDisplay = movies;
+            seriesToDisplay = series;
+
+            renderMoviesGrid();
+            renderSeriesGrid();
+        }
+
+        // Funções de Renderização adaptadas ao estilo Pobreflix
+        function renderMoviesGrid() {
+            moviesGrid.innerHTML = ''; // Limpa o grid antes de adicionar
+
+            if (moviesToDisplay.length === 0) {
+                moviesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhum filme encontrado.</div>';
+                return;
+            }
+
+            moviesToDisplay.forEach(item => {
+                const isLast = localStorage.getItem('last_film') === item.title;
+                const card = document.createElement('div');
+                card.id = 'collview'; // ID do Pobreflix
+                card.innerHTML = `
+                    <div class="vbItemImage">
+                        <div class="TopLeft">
+                            <span class="capa-info capa-audio">${item.title.toLowerCase().includes('dublado') ? 'DUB' : (item.title.toLowerCase().includes('legendado') ? 'LEG' : '')}</span>
+                            <span class="capa-info capa-quali">${item.quality || 'HD'}</span>
+                        </div>
+                        <a href="javascript:void(0);" title="${item.title}" onclick="openDetailsModal({ title: '${item.title.replace(/'/g, "\\'")}', url: '${item.url.replace(/'/g, "\\'")}', thumb: '${item.thumb.replace(/'/g, "\\'")}' }, 'movie');">
+                            <div class="vb_image_container" data-background-src="${item.thumb}" style="background-image:url(${item.thumb});width:160px;height:245px"></div>
+                        </a>
+                        <div class='caption'>
+                            <a href="javascript:void(0);" title="Assistir ${item.title} Online" onclick="openDetailsModal({ title: '${item.title.replace(/'/g, "\\'")}', url: '${item.url.replace(/'/g, "\\'")}', thumb: '${item.thumb.replace(/'/g, "\\'")}' }, 'movie');">
+                                ${item.title}
+                            </a>
+                            <span class="y">${new Date().getFullYear()}</span> <span class="t">~min</span> </div>
+                    </div>
+                `;
+                moviesGrid.appendChild(card);
+            });
+            // Inicializar Owl Carousel se estiver usando (será necessário adicionar o JS e CSS do Owl Carousel)
+            // if (typeof jQuery !== 'undefined' && typeof jQuery().owlCarousel !== 'undefined') {
+            //     $('#moviesGrid').owlCarousel({
+            //         loop:true,
+            //         margin:10,
+            //         nav:true,
+            //         responsive:{
+            //             0:{items:2},
+            //             600:{items:4},
+            //             1000:{items:6}
+            //         }
+            //     });
+            // }
+        }
+
+        function renderSeriesGrid() {
+            seriesGrid.innerHTML = ''; // Limpa o grid antes de adicionar
+
+            if (Object.keys(seriesToDisplay).length === 0) {
+                seriesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhuma série encontrada.</div>';
+                return;
+            }
+
+            Object.entries(seriesToDisplay).forEach(([name, eps]) => {
+                const thumb = eps[0].thumb;
+                const card = document.createElement('div');
+                card.id = 'collview'; // ID do Pobreflix
+                card.innerHTML = `
+                    <div class="vbItemImage">
+                        <div class="TopLeft">
+                             <span class="capa-info capa-audio">${name.toLowerCase().includes('dublado') ? 'DUB' : (name.toLowerCase().includes('legendado') ? 'LEG' : '')}</span>
+                             <span class="capa-info capa-quali">HD</span>
+                        </div>
+                        <a href="javascript:void(0);" title="${name}" onclick="openDetailsModal({ title: '${name.replace(/'/g, "\\'")}', url: '${eps[0].url.replace(/'/g, "\\'")}', thumb: '${thumb.replace(/'/g, "\\'")}' }, 'series');">
+                            <div class="vb_image_container" data-background-src="${thumb}" style="background-image:url(${thumb});width:160px;height:245px"></div>
+                        </a>
+                        <div class='caption'>
+                            <a href="javascript:void(0);" title="Assistir ${name} Online" onclick="openDetailsModal({ title: '${name.replace(/'/g, "\\'")}', url: '${eps[0].url.replace(/'/g, "\\'")}', thumb: '${thumb.replace(/'/g, "\\'")}' }, 'series');">
+                                ${name}
+                            </a>
+                            <span class="y">${eps.length} Episódios</span>
+                        </div>
+                    </div>
+                `;
+                seriesGrid.appendChild(card);
+            });
+            // Inicializar Owl Carousel se estiver usando (será necessário adicionar o JS e CSS do Owl Carousel)
+            // if (typeof jQuery !== 'undefined' && typeof jQuery().owlCarousel !== 'undefined') {
+            //     $('#seriesGrid').owlCarousel({
+            //         loop:true,
+            //         margin:10,
+            //         nav:true,
+            //         responsive:{
+            //             0:{items:2},
+            //             600:{items:4},
+            //             1000:{items:6}
+            //         }
+            //     });
+            // }
+        }
+
+
+        // --- Funções de Filtragem e Categoria ---
+        function filterItems() {
+            const q = searchInput.value.toLowerCase();
+            const cat = categorySelect.value;
+
+            filteredItems = allItems.filter(i =>
+                i.title.toLowerCase().includes(q) &&
+                (!cat || i.group === cat)
+            );
+            renderContent();
+        }
+
+        function updateCategories() {
+            const cats = [...new Set(allItems.map(i => i.group).filter(Boolean))].sort();
+            categorySelect.innerHTML = '<option value="">Todas as Categorias</option>';
+            cats.forEach(c => {
+                const o = document.createElement('option');
+                o.value = c;
+                o.textContent = c;
+                categorySelect.appendChild(o);
+            });
+            // Também popular os menus do Pobreflix (se aplicável)
+            const movieMenu = document.getElementById('elNavigation_17_menu');
+            const seriesMenu = document.getElementById('elNavigation_38_menu');
+            if (movieMenu) {
+                movieMenu.innerHTML = '<li class="ipsMenu_item"><a href="javascript:void(0);" onclick="categorySelect.value=\'\'; filterItems(); showSection(moviesSection); closeModalMenus();">Todos os Filmes</a></li>';
+                cats.filter(c => !c.toLowerCase().includes('séries')).forEach(c => {
+                    const o = document.createElement('li');
+                    o.className = 'ipsMenu_item';
+                    o.innerHTML = `<a href="javascript:void(0);" onclick="categorySelect.value='${c}'; filterItems(); showSection(moviesSection); closeModalMenus();">${c}</a>`;
+                    movieMenu.appendChild(o);
+                });
+            }
+            if (seriesMenu) {
+                seriesMenu.innerHTML = '<li class="ipsMenu_item"><a href="javascript:void(0);" onclick="categorySelect.value=\'\'; filterItems(); showSection(seriesSection); closeModalMenus();">Todas as Séries</a></li>';
+                cats.filter(c => c.toLowerCase().includes('séries') || c.toLowerCase().includes('anime')).forEach(c => { // Heurística simples
+                    const o = document.createElement('li');
+                    o.className = 'ipsMenu_item';
+                    o.innerHTML = `<a href="javascript:void(0);" onclick="categorySelect.value='${c}'; filterItems(); showSection(seriesSection); closeModalMenus();">${c}</a>`;
+                    seriesMenu.appendChild(o);
+                });
+            }
+        }
+
+        function closeModalMenus() {
+            // Fechar menus de navegação do Pobreflix após clicar numa categoria
+            document.querySelectorAll('.ipsMenu').forEach(menu => menu.classList.add('ipsHide'));
+            document.querySelectorAll('[data-ipsMenu-activeClass="ipsNavActive_menu"]').forEach(btn => btn.classList.remove('ipsNavActive_menu'));
+             if (document.getElementById('elMobileDrawer') && !document.getElementById('elMobileDrawer').classList.contains('ipsHide')) {
+                document.getElementById('elMobileDrawer').classList.add('ipsHide');
+            }
+        }
+
+        // --- Funções de Player de Vídeo e Modal de Episódios ---
+        function openSeries(name, eps) {
+            currentSeriesName = name;
+            currentSeriesEps = eps;
+            modalTitle.textContent = name;
+            episodesList.innerHTML = '';
+            const last = localStorage.getItem(`last_${name}`);
+            eps.forEach((ep, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left p-2 bg-gray-700 rounded hover:bg-gray-600 flex justify-between items-center transition-colors';
+                btn.innerHTML = `<span>${ep.title}</span>${ep.title===last?'<span class="text-red-500 text-xs ml-2">🔴 Visto</span>':''}`;
+                btn.onclick = () => playEpisode(idx);
+                episodesList.appendChild(btn);
+            });
+            episodesModal.classList.remove('hidden');
+            episodesModal.classList.add('flex');
+        }
+
+        function playEpisode(idx) {
+            currentEpIndex = idx;
+            const ep = currentSeriesEps[idx];
+            localStorage.setItem(`last_${currentSeriesName}`, ep.title);
+            openVideoLink(ep);
+            episodesModal.classList.add('hidden');
+            episodesModal.classList.remove('flex');
+        }
+
+        let lastTimeSaved = 0;
+        function onTimeUpdate(event) {
+            const player = event.target;
+            const savedTimeKey = `time_${player.dataset.currentItemTitle}`;
+            if (Math.floor(player.currentTime) % 5 === 0 && Math.floor(player.currentTime) !== lastTimeSaved) {
+                localStorage.setItem(savedTimeKey, player.currentTime);
+                lastTimeSaved = Math.floor(player.currentTime);
+            }
+            if (player.ended) {
+                localStorage.setItem(savedTimeKey, 0);
+            }
+        }
+
+        function openVideoLink(item) {
+            if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+
+            player.dataset.currentItemTitle = item.title;
+            player.removeEventListener('timeupdate', onTimeUpdate);
+
+            if (!currentSeriesName) {
+                localStorage.setItem('last_film', item.title);
+                renderMoviesGrid();
+            }
+
+            const savedTimeKey = `time_${item.title}`;
+            const savedTime = parseFloat(localStorage.getItem(savedTimeKey)) || 0;
+
+            if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) {
+                hlsInstance = new Hls();
+                hlsInstance.loadSource(item.url);
+                hlsInstance.attachMedia(player);
+                hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                    if (savedTime > 0) {
+                        player.currentTime = savedTime;
+                    }
+                    player.play().catch(() => {});
+                });
+            } else {
+                player.src = item.url;
+                player.addEventListener('loadedmetadata', function resume() {
+                    if (savedTime > 0) {
+                        player.currentTime = savedTime;
+                    }
+                    player.play().catch(() => {});
+                    player.removeEventListener('loadedmetadata', resume);
+                });
+            }
+
+            playerContainer.classList.remove('hidden');
+            player.addEventListener('timeupdate', onTimeUpdate);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- Funções do Modal de Detalhes ---
+        async function openDetailsModal(item, type) {
+            currentPlayItem = item;
+            detailsModal.classList.remove('hidden');
+            detailsModal.classList.add('flex');
+
+            detailPoster.src = 'https://dummyimage.com/200x300/444/fff.png&text=Carregando...';
+            detailTitle.textContent = 'Carregando...';
+            detailYearGenre.textContent = 'Ano | Gênero';
+            detailPlot.textContent = 'Carregando sinopse...';
+            detailActors.textContent = 'Elenco: Carregando...';
+            detailRating.textContent = 'Avaliação IMDb: Carregando...';
+            playMovieButton.textContent = type === 'movie' ? '▶️ Assistir Filme' : '▶️ Ver Episódios';
+
+            if (type === 'series') {
+                playMovieButton.onclick = () => {
+                    closeDetailsModal.click();
+                    const seriesName = item.title.replace(/[\s\.-]?[sS]\d+[eE]\d+/, '').trim();
+                    const seriesData = seriesToDisplay[seriesName];
+                    if (seriesData) {
+                        openSeries(seriesName, seriesData);
+                    } else {
+                        alert("Série não encontrada para exibir episódios.");
+                    }
+                };
+            } else {
+                playMovieButton.onclick = () => {
+                    closeDetailsModal.click();
+                    openVideoLink(item);
+                };
+            }
+
+            const details = await fetchDetailsFromOMDb(item.title, type);
+            if (details) {
+                detailPoster.src = details.poster;
+                detailTitle.textContent = details.title;
+                detailYearGenre.textContent = `${details.year} | ${details.genre}`;
+                detailPlot.textContent = details.plot;
+                detailActors.textContent = `Elenco: ${details.actors}`;
+                detailRating.textContent = `Avaliação IMDb: ${details.imdbRating}`;
+            } else {
+                detailPoster.src = item.thumb;
+                detailTitle.textContent = item.title;
+                detailYearGenre.textContent = 'Informação não disponível';
+                detailPlot.textContent = 'Não foi possível carregar a sinopse detalhada.';
+                detailActors.textContent = 'Elenco: N/A';
+                detailRating.textContent = 'Avaliação IMDb: N/A';
+            }
+        }
+
+        closeDetailsModal.onclick = () => {
+            detailsModal.classList.add('hidden');
+            detailsModal.classList.remove('flex');
+            currentPlayItem = null;
+        };
+
+        // --- Event Listeners dos Botões Principais e Filtros ---
+        searchInput.oninput = filterItems;
+        categorySelect.onchange = filterItems;
+
+        // --- Funções de Carregamento da Lista ---
+        async function loadList() {
+            loadSpinner.classList.remove('hidden');
+            baixarBtn.disabled = true;
+            limparListaBtn.disabled = true;
+            searchInput.disabled = true;
+            categorySelect.disabled = true;
+
+            try {
+                const playlistUrl = 'https://masteriptv.tech/get.php?username=393880589&password=335139230&type=m3u_plus&output=ts';
+                const res = await fetch(playlistUrl);
+                if (!res.ok) {
+                    throw new Error(`Erro HTTP! Status: ${res.status} - ${res.statusText}`);
+                }
+                const text = await res.text();
+
+                await saveToDB('m3u_data', text);
+                allItems = parseM3U(text);
+                updateCategories();
+                filterItems();
+
+                alert('Lista de conteúdo carregada com sucesso!');
+
+            } catch (e) {
+                console.error("Erro detalhado ao carregar lista:", e);
+                alert('Erro ao carregar lista: ' + e.message + '. Por favor, verifique sua conexão ou a URL da lista.');
+            } finally {
+                loadSpinner.classList.add('hidden');
+                baixarBtn.disabled = false;
+                limparListaBtn.disabled = false;
+                searchInput.disabled = false;
+                categorySelect.disabled = false;
+            }
+        }
+
+        baixarBtn.onclick = loadList;
+
+        limparListaBtn.onclick = async () => {
+            if (confirm('Tem certeza que deseja ATUALIZAR a lista? Isso apagará os dados salvos e recarregará a página.')) {
+                await clearDB();
+                location.reload();
+            }
+        };
+
+        // --- Lógica de Navegação de Seção ---
+        function showSection(sectionElement) {
+            moviesSection.classList.add('hidden');
+            seriesSection.classList.add('hidden');
+            sectionElement.classList.remove('hidden');
+
+            // Atualiza os botões de navegação no cabeçalho do Pobreflix
+            document.getElementById('elNavSecondary_56').classList.remove('ipsNavActive'); // Remove 'ipsNavActive' de 'Início'
+            document.getElementById('elNavSecondary_17').classList.remove('ipsNavActive'); // Remove 'ipsNavActive' de 'Filmes'
+            document.getElementById('elNavSecondary_38').classList.remove('ipsNavActive'); // Remove 'ipsNavActive' de 'Séries'
+
+            if (sectionElement === moviesSection) {
+                document.getElementById('elNavSecondary_17').classList.add('ipsNavActive');
+            } else if (sectionElement === seriesSection) {
+                document.getElementById('elNavSecondary_38').classList.add('ipsNavActive');
+            }
+            // Se for a seção de filmes (Inicio é o padrão), ativamos o link de Inicio
+             if (sectionElement === moviesSection) {
+                document.getElementById('elNavSecondary_56').classList.add('ipsNavActive');
+            }
+        }
+
+        // Event listeners para os links de navegação do Pobreflix
+        document.querySelector('#yt__acme_nav__primary li:nth-child(1) a').onclick = () => showSection(moviesSection); // Início
+        document.querySelector('#yt__acme_nav__primary li:nth-child(2) > a').onclick = () => showSection(moviesSection); // Filmes (menu principal)
+        document.querySelector('#yt__acme_nav__primary li:nth-child(3) > a').onclick = () => showSection(seriesSection); // Séries (menu principal)
+
+        // Botão de fechar o mobile drawer (precisa de um ID no HTML)
+        const mobileDrawerCloseButton = document.querySelector('#elMobileDrawer .ipsDrawer_close');
+        if (mobileDrawerCloseButton) {
+            mobileDrawerCloseButton.id = 'closeMobileDrawer'; // Adiciona um ID para fácil referência
+        }
+
+
+        // --- Inicialização ---
+        getFromDB('m3u_data').then(text => {
+            if (text) {
+                allItems = parseM3U(text);
+                updateCategories();
+                filterItems();
+            } else {
+                moviesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Clique em "CARREGAR LISTA DE CONTEUDO" para começar!</div>';
+                seriesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhuma série disponível ainda. Carregue a lista de conteúdo.</div>';
+            }
+        }).catch(e => {
+            console.error("Erro ao carregar dados salvos do IndexedDB:", e);
+            alert("Erro ao carregar dados salvos. Por favor, tente limpar os dados do site no seu navegador e recarregue a página.");
+            moviesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Erro ao carregar dados.</div>';
+            seriesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Erro ao carregar dados.</div>';
+        });
+
+        // Garante que a seção de filmes seja exibida por padrão ao carregar
+        showSection(moviesSection);
+    </script>
+    </body>
+</html>
