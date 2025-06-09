@@ -6,6 +6,7 @@
     <title>🍿 CINEBLACK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <style>
         /* Ajuste para o padding do container principal */
         .p-6 {
@@ -19,6 +20,15 @@
         /* Estilos para o overlay do modal de detalhes */
         .modal-overlay {
             background-color: rgba(0, 0, 0, 0.8);
+        }
+        /* Estilos para o player Video.js */
+        #livePlayer {
+            width: 100%; /* Garante que o player ocupe a largura total */
+            height: 400px; /* Altura padrão, Video.js pode ajustar com 'fluid' */
+        }
+        /* Responsividade para o Video.js */
+        .video-js.vjs-fluid {
+            padding-top: 56.25%; /* Proporção 16:9 */
         }
     </style>
 </head>
@@ -56,7 +66,7 @@
         </div>
 
         <div id="livePlayerContainer" class="relative mb-10 hidden">
-            <video id="livePlayer" controls class="w-full max-w-4xl mx-auto block rounded-lg shadow-2xl"></video>
+            <video id="livePlayer" class="video-js vjs-default-skin vjs-big-play-button-centered" controls preload="auto" data-setup='{"autoplay": true, "fluid": true}'></video>
             <button id="closeLivePlayer" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-lg transition-colors">✖</button>
         </div>
 
@@ -125,16 +135,14 @@
         © 2025 - UMA IDEIA QUE NASCEU NOS CORREDORES DO IFBA
     </footer>
 
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+
     <script>
         // --- CHAVE DA OMDb API ---
-        // ATENÇÃO: SUBSTITUA 'SUA_CHAVE_AQUI' PELA SUA CHAVE REAL DA OMDb API!
-        // Obtenha uma em http://www.omdbapi.com/apikey.aspx
         const OMDb_API_KEY = 'fb0e86e11124588a98eb2e0c5909126c'; 
         // --- FIM DA CHAVE ---
 
         // CONFIGURE A URL DO PROXY AQUI
-        // ATENÇÃO: cors-anywhere.herokuapp.com é um proxy público e pode ter limites ou ser descontinuado.
-        // É ideal para testes e desenvolvimento. Para produção, considere seu próprio proxy ou streams HTTPS.
         const PROXY_URL = 'https://cors-anywhere.herokuapp.com/'; 
         // ATENÇÃO: Visite https://cors-anywhere.herokuapp.com/ uma vez antes de usar, para ativar o proxy.
 
@@ -144,16 +152,17 @@
         const loadSpinner = document.getElementById('loadSpinner');
         const limparListaBtn = document.getElementById('limparListaBtn');
 
-        // Player de Filmes/Séries (principal)
+        // Player de Filmes/Séries (HLS.js + Video HTML5 padrão)
         const playerContainer = document.getElementById('playerContainer');
         const player = document.getElementById('player');
         const closePlayer = document.getElementById('closePlayer');
         const prevEpisodeBtn = document.getElementById('prevEpisodeBtn');
         const nextEpisodeBtn = document.getElementById('nextEpisodeBtn');
 
-        // NOVO: Player de TV Ao Vivo (secundário)
+        // NOVO: Player de TV Ao Vivo (Video.js)
         const livePlayerContainer = document.getElementById('livePlayerContainer');
-        const livePlayer = document.getElementById('livePlayer');
+        // Não precisamos pegar 'livePlayer' aqui diretamente, pois o Video.js o controlará.
+        let videoJsLivePlayer = null; // Variável para a instância do Video.js
         const closeLivePlayer = document.getElementById('closeLivePlayer');
 
         const episodesModal = document.getElementById('episodesModal');
@@ -164,13 +173,13 @@
         // Elementos para seções
         const moviesSection = document.getElementById('moviesSection');
         const seriesSection = document.getElementById('seriesSection');
-        const liveTvSection = document.getElementById('liveTvSection'); // NOVO
+        const liveTvSection = document.getElementById('liveTvSection'); 
         const showMoviesBtn = document.getElementById('showMoviesBtn');
         const showSeriesBtn = document.getElementById('showSeriesBtn');
-        const showLiveTvBtn = document.getElementById('showLiveTvBtn'); // NOVO
+        const showLiveTvBtn = document.getElementById('showLiveTvBtn'); 
         const moviesGrid = document.getElementById('moviesGrid');
         const seriesGrid = document.getElementById('seriesGrid');
-        const liveTvGrid = document.getElementById('liveTvGrid'); // NOVO
+        const liveTvGrid = document.getElementById('liveTvGrid'); 
 
         // Elementos do Modal de Detalhes
         const detailsModal = document.getElementById('detailsModal');
@@ -188,18 +197,17 @@
 
         let moviesToDisplay = [];
         let seriesToDisplay = {};
-        let liveTvToDisplay = []; // NOVO
+        let liveTvToDisplay = []; 
 
-        let hlsInstance = null; // Para filmes/séries
-        let liveHlsInstance = null; // NOVO: Para TV ao vivo
+        let hlsInstance = null; // Para filmes/séries (ainda usamos HLS.js aqui)
 
         let currentSeriesName = null;
         let currentSeriesEps = [];
         let currentEpIndex = null;
-        let currentPlayItem = null; // Para guardar o item a ser reproduzido do modal de detalhes
+        let currentPlayItem = null; 
 
         const dbName = 'RykelmyFilmesDB';
-        const dbVersion = 2; // Versão do IndexedDB
+        const dbVersion = 2; 
         const storeName = 'm3uStore';
 
         // --- Funções de IndexedDB ---
@@ -249,7 +257,6 @@
         function parseM3U(text) {
             const lines = text.split(/\r?\n/);
             const items = [];
-            // REMOVIDO: const vodExt = /\.(mp4|mkv|mov|avi|webm|m3u8)$/i; 
 
             for (let i = 0; i < lines.length; i++) {
                 if (lines[i].startsWith('#EXTINF')) {
@@ -258,7 +265,7 @@
                     const group = (lines[i].match(/group-title="(.*?)"/) || [])[1] || '';
                     const url = lines[i+1]?.trim();
                     
-                    // AQUI ESTÁ A MUDANÇA: Apenas verifica se é uma URL http válida (sem verificar extensão)
+                    // Apenas verifica se é uma URL http válida (sem verificar extensão)
                     if (url && url.startsWith('http')) { 
                         items.push({ title, url, thumb, group });
                     }
@@ -286,7 +293,6 @@
                     series[name].push(item);
                 } 
                 // 2. Tenta identificar se é TV AO VIVO (por palavras-chave no group-title)
-                // Adicionei os termos exatos que você mostrou na sua lista M3U.
                 else if (groupLower.includes('ao vivo') || 
                            groupLower.includes('live tv') || 
                            groupLower.includes('canais') || 
@@ -300,8 +306,8 @@
                            groupLower.includes('adulto') || 
                            groupLower.includes('radios') ||
                            // TERMOS ADICIONADOS COM BASE NAS SUAS ENTRADAS DE EXEMPLO:
-                           groupLower.includes('noticias jornalismo') || // Para "☑️ NOTICIAS JORNALISMO"
-                           groupLower.includes('globo - principais') // Para "☑️ GLOBO - PRINCIPAIS"
+                           groupLower.includes('noticias jornalismo') || 
+                           groupLower.includes('globo - principais') 
                         ) {
                     liveTv.push(item);
                 }
@@ -502,7 +508,7 @@
             }
         }
 
-        // Função para reproduzir Filmes e Séries (player principal)
+        // Função para reproduzir Filmes e Séries (player principal HLS.js)
         function openVideoLink(item) {
             // Garante que o player de TV ao vivo esteja fechado e parado
             closeLivePlayer.click();
@@ -521,11 +527,11 @@
             const savedTime = parseFloat(localStorage.getItem(savedTimeKey)) || 0;
 
             // Aplica o proxy para o URL do stream
-            const streamUrl = item.url.startsWith('http') ? PROXY_URL + item.url : item.url; // Adiciona o proxy
+            const streamUrl = item.url.startsWith('http') ? PROXY_URL + item.url : item.url; 
 
-            if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) { // Se a URL original tiver .m3u8
+            if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) { 
                 hlsInstance = new Hls();
-                hlsInstance.loadSource(streamUrl); // Carrega via proxy
+                hlsInstance.loadSource(streamUrl); 
                 hlsInstance.attachMedia(player);
                 hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
                     if (savedTime > 0) {
@@ -534,7 +540,7 @@
                     player.play().catch(() => {});
                 });
             } else {
-                player.src = streamUrl; // Carrega via proxy
+                player.src = streamUrl; 
                 player.addEventListener('loadedmetadata', function resume() {
                     if (savedTime > 0) {
                         player.currentTime = savedTime;
@@ -546,38 +552,54 @@
 
             playerContainer.classList.remove('hidden');
             player.addEventListener('timeupdate', onTimeUpdate);
-            player.muted = false; // Garante que o player principal não está mutado por padrão
+            player.muted = false; 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // NOVO: Função para reproduzir TV Ao Vivo (player secundário)
+        // NOVO: Função para reproduzir TV Ao Vivo (player Video.js)
         function playLiveChannel(item) {
             // Garante que o player de filmes/séries esteja fechado e parado
             closePlayer.click();
 
-            if (liveHlsInstance) { liveHlsInstance.destroy(); liveHlsInstance = null; }
-
-            // Aplica o proxy para o URL do stream
-            const streamUrl = item.url.startsWith('http') ? PROXY_URL + item.url : item.url; // Adiciona o proxy
-
-            if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) { // Se a URL original tiver .m3u8
-                liveHlsInstance = new Hls();
-                liveHlsInstance.loadSource(streamUrl); // Carrega via proxy
-                liveHlsInstance.attachMedia(livePlayer);
-                liveHlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-                    livePlayer.play().catch(() => {});
-                });
-            } else {
-                livePlayer.src = streamUrl; // Carrega via proxy
-                livePlayer.play().catch(() => {});
+            // Destroi a instância existente do Video.js se houver
+            if (videoJsLivePlayer) {
+                videoJsLivePlayer.dispose(); // Importante para liberar recursos
+                videoJsLivePlayer = null;
             }
+            
+            // Aplica o proxy para o URL do stream
+            const streamUrl = item.url.startsWith('http') ? PROXY_URL + item.url : item.url; 
+
+            // Opções para o Video.js
+            const videoJsOptions = {
+                autoplay: true, // Inicia automaticamente
+                controls: true, // Mostra os controles
+                fluid: true,    // Ajusta a largura e mantém a proporção 16:9
+                preload: 'auto',
+                liveui: true,   // Ativa UI para live (para Video.js 8+)
+                sources: [{
+                    src: streamUrl,
+                    type: 'application/x-mpegURL' // Tipo para HLS
+                }]
+            };
+
+            // Inicializa o player Video.js
+            videoJsLivePlayer = videojs('livePlayer', videoJsOptions);
+
+            // Tenta reproduzir. Em alguns navegadores, autoplay pode ser bloqueado
+            videoJsLivePlayer.ready(function() {
+                this.play().catch(error => {
+                    console.error("Erro ao tentar reproduzir com Video.js:", error);
+                    alert("Erro ao iniciar a reprodução do canal. Verifique o console para mais detalhes ou tente outro canal.");
+                });
+            });
 
             livePlayerContainer.classList.remove('hidden');
-            livePlayer.muted = false; 
+            // O Video.js já gerencia o estado de mute através das opções ou do próprio UI
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Event listener para fechar o player principal
+        // Event listener para fechar o player principal (inalterado)
         closePlayer.onclick = () => {
             player.pause();
             player.src = '';
@@ -591,13 +613,11 @@
             currentEpIndex = null;
         };
 
-        // NOVO: Event listener para fechar o player de TV ao vivo
+        // NOVO: Event listener para fechar o player de TV ao vivo (agora destrói Video.js)
         closeLivePlayer.onclick = () => {
-            livePlayer.pause();
-            livePlayer.src = '';
-            if (liveHlsInstance) {
-                liveHlsInstance.destroy();
-                liveHlsInstance = null;
+            if (videoJsLivePlayer) {
+                videoJsLivePlayer.dispose(); // Destroi a instância do Video.js
+                videoJsLivePlayer = null;
             }
             livePlayerContainer.classList.add('hidden');
         };
@@ -606,7 +626,7 @@
         async function openDetailsModal(item, type) {
             // Garante que ambos os players estejam fechados quando o modal de detalhes abrir
             closePlayer.click();
-            closeLivePlayer.click();
+            closeLivePlayer.click(); // Garante que Video.js também é fechado
 
             currentPlayItem = item;
             detailsModal.classList.remove('hidden');
@@ -636,7 +656,7 @@
             } else { // Se for filme, o botão de assistir deve tocar o filme diretamente
                 playMovieButton.onclick = () => {
                     closeDetailsModal.click(); 
-                    openVideoLink(item); // Usa o player principal
+                    openVideoLink(item); 
                 };
             }
 
@@ -726,11 +746,15 @@
             playerContainer.classList.add('hidden'); 
             livePlayerContainer.classList.add('hidden'); 
 
-            // Pausa e destrói instâncias HLS de ambos os players para liberar recursos
+            // Pausa e destrói instâncias HLS.js (filmes/séries)
             player.pause();
-            livePlayer.pause();
             if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-            if (liveHlsInstance) { liveHlsInstance.destroy(); liveHlsInstance = null; }
+
+            // Pausa e destrói instância Video.js (TV ao vivo)
+            if (videoJsLivePlayer) {
+                videoJsLivePlayer.dispose();
+                videoJsLivePlayer = null;
+            }
 
             // Exibe a seção clicada
             sectionElement.classList.remove('hidden');
