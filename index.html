@@ -1,794 +1,466 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🍿 CINEBLACK</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para o Meu Amor - Dia dos Namorados</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
     <style>
-        /* Ajuste para o padding do container principal */
-        .p-6 {
-            padding: 1.5rem;
+        /* Estilos Gerais */
+        body {
+            font-family: 'Quicksand', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f0f0;
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
         }
-        @media (min-width: 768px) {
-            .p-6 {
-                padding: 2rem;
+
+        h1, h2, h3 {
+            font-family: 'Pacifico', cursive;
+            color: #d8435d;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        section {
+            padding: 60px 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            margin-bottom: 40px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estilos da Página de Contagem Regressiva */
+        #countdown-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-align: center;
+            font-size: 1.2em;
+            position: relative; /* Para posicionar o botão da senha */
+        }
+
+        #countdown-page h1 {
+            font-family: 'Pacifico', cursive;
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        #timer {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-top: 30px;
+        }
+
+        #access-button {
+            display: none; /* Escondido por padrão */
+            margin-top: 40px;
+            padding: 15px 30px;
+            background-color: #d8435d;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        #access-button:hover {
+            background-color: #c0392b;
+            transform: translateY(-3px);
+        }
+
+        /* Botão e Campo de Senha */
+        #password-toggle-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.2); /* Fundo transparente */
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+        }
+
+        #password-toggle-button:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        #password-input-container {
+            display: none; /* Escondido por padrão */
+            margin-top: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            color: #333;
+            flex-direction: column; /* Adicionado para organizar input e botão */
+            align-items: center; /* Centraliza itens */
+        }
+
+        #password-input-container input[type="password"] {
+            padding: 10px;
+            margin-bottom: 10px; /* Alterado para espaçamento vertical */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            width: 100%; /* Ocupa a largura total do container */
+            max-width: 250px; /* Limita a largura máxima */
+            box-sizing: border-box; /* Inclui padding e border na largura */
+        }
+
+        #password-input-container button {
+            padding: 10px 15px;
+            background-color: #d8435d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #password-input-container button:hover {
+            background-color: #c0392b;
+        }
+
+        #password-message {
+            color: #d8435d;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        /* Estilos do Conteúdo Principal (Site) */
+        #main-content {
+            display: none; /* Escondido por padrão */
+        }
+
+        /* Mural de Fotos e Vídeos */
+        .mural-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: #fce8ed;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Ajuste para embeds de vídeo (YouTube/Vimeo) */
+        .mural-item .video-responsive {
+            position: relative;
+            padding-bottom: 56.25%; /* Proporção 16:9 */
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            background: #000;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .mural-item .video-responsive iframe,
+        .mural-item .video-responsive video { /* Adicionado para o vídeo local caso use */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+
+
+        .mural-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .mural-item p {
+            text-align: center;
+            font-size: 1.1em;
+            color: #555;
+            font-style: italic;
+        }
+
+        /* Galeria de Memórias */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .gallery-item {
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item img:hover {
+            transform: scale(1.05);
+        }
+
+        .gallery-caption {
+            background-color: #d8435d;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        /* Playlist */
+        .playlist-container {
+            text-align: center;
+        }
+
+        .playlist-container iframe {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Rodapé */
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            background-color: #333;
+            color: white;
+            font-size: 0.9em;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
             }
-        }
-        /* Estilos para o overlay do modal de detalhes */
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.8);
-        }
-        /* Estilos para o player Video.js */
-        #livePlayer {
-            width: 100%; /* Garante que o player ocupe a largura total */
-            height: 400px; /* Altura padrão, Video.js pode ajustar com 'fluid' */
-        }
-        /* Responsividade para o Video.js */
-        .video-js.vjs-fluid {
-            padding-top: 56.25%; /* Proporção 16:9 */
+            #countdown-page h1 {
+                font-size: 2.5em;
+            }
+            #timer {
+                font-size: 2em;
+            }
+            section {
+                padding: 40px 15px;
+            }
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+            #password-toggle-button {
+                top: 10px;
+                right: 10px;
+                padding: 8px 15px;
+                font-size: 0.8em;
+            }
         }
     </style>
 </head>
-<body class="bg-black text-white font-sans min-h-screen flex flex-col">
-    <header class="text-center py-6 bg-gradient-to-r from-blue-700 to-red-500 flex justify-between items-center px-4">
-        <h1 class="text-3xl font-bold">🍿 CINEBLACK</h1>
-        <nav>
-            <button id="showMoviesBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Filmes</button>
-            <button id="showSeriesBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Séries</button>
-            <button id="showLiveTvBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Ao Vivo</button> </nav>
-    </header>
+<body>
 
-    <div class="p-6 max-w-7xl mx-auto flex-1 w-full">
-        <div class="flex flex-col md:flex-row gap-4 mb-6 justify-center items-center">
-            <input type="text" id="searchInput" placeholder="Pesquisar..." class="p-3 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-600 w-full md:w-80" />
-            <select id="categorySelect" class="p-3 rounded bg-gray-800 text-white border border-gray-600 w-full md:w-60">
-                <option value="">Todas as Categorias</option>
-            </select>
-            <button id="baixarListaBtn" class="relative bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center justify-center transition-colors">
-                <span id="loadSpinner" class="absolute left-3 w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin hidden"></span>
-                📥 CARREGAR LISTA DE CONTEUDO
-            </button>
-            <button id="limparListaBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-0.5 py-0.5 rounded transition-colors">
-                🔄 ATUALIZAR LISTA
-            </button>
-        </div>
+    <div id="countdown-page">
+        <button id="password-toggle-button">Já sabe a senha secreta?</button>
 
-        <div id="playerContainer" class="relative mb-10 hidden">
-            <video id="player" controls muted class="w-full max-w-4xl mx-auto block rounded-lg shadow-2xl"></video>
-            <div class="mt-2 flex justify-center gap-4">
-                <button id="prevEpisodeBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">Anterior</button>
-                <button id="nextEpisodeBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">Próximo</button>
-            </div>
-            <button id="closePlayer" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-lg transition-colors">✖</button>
-        </div>
+        <h1>Uma surpresa está chegando, meu amor!</h1>
+        <p>Prepare-se para o nosso Dia dos Namorados.</p>
+        <div id="timer"></div>
+        <button id="access-button">Entrar no Nosso Cantinho</button>
 
-        <div id="livePlayerContainer" class="relative mb-10 hidden">
-            <video id="livePlayer" class="video-js vjs-default-skin vjs-big-play-button-centered" controls preload="auto" data-setup='{"autoplay": true, "fluid": true}'></video>
-            <button id="closeLivePlayer" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-lg transition-colors">✖</button>
-        </div>
-
-        <div id="moviesSection">
-            <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-center uppercase tracking-wide text-pink-500">
-                🎬 Filmes Disponíveis
-            </h2>
-            <div id="moviesGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <div class="text-center text-gray-400 py-10 col-span-full">
-                    Carregando filmes...
-                </div>
-            </div>
-        </div>
-
-        <div id="seriesSection" class="hidden">
-            <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-center uppercase tracking-wide text-pink-500 mt-10">
-                📺 Séries Disponíveis
-            </h2>
-            <div id="seriesGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <div class="text-center text-gray-400 py-10 col-span-full">
-                    Carregando séries...
-                </div>
-            </div>
-        </div>
-
-        <div id="liveTvSection" class="hidden">
-            <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-center uppercase tracking-wide text-pink-500 mt-10">
-                📡 TV Ao Vivo
-            </h2>
-            <div id="liveTvGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <div class="text-center text-gray-400 py-10 col-span-full">
-                    Carregando canais ao vivo...
-                </div>
-            </div>
+        <div id="password-input-container">
+            <p>Digite a senha secreta:</p>
+            <input type="password" id="secret-password-input" placeholder="Senha aqui">
+            <button id="submit-password-button">Entrar</button>
+            <p id="password-message"></p>
         </div>
     </div>
 
-    <div id="episodesModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
-        <div class="bg-gray-900 rounded-xl p-6 max-w-lg w-full relative">
-            <button id="closeModal" class="absolute top-3 right-3 text-white text-2xl font-bold">&times;</button>
-            <h3 id="modalTitle" class="text-xl font-bold mb-4">Episódios</h3>
-            <div id="episodesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
-        </div>
-    </div>
+    <div id="main-content">
+        <header>
+            <h1 style="font-size: 3.5em; padding-top: 40px;">Para o Meu Amor, Luisinha!</h1>
+        </header>
 
-    <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 modal-overlay">
-        <div class="bg-gray-900 rounded-xl p-6 max-w-2xl w-full relative mx-4 max-h-[90vh] overflow-y-auto">
-            <button id="closeDetailsModal" class="absolute top-3 right-3 text-white text-2xl font-bold">&times;</button>
-            <div class="flex flex-col md:flex-row gap-6">
-                <img id="detailPoster" src="https://dummyimage.com/200x300/444/fff.png&text=Carregando..." alt="Pôster" class="w-full md:w-1/3 rounded-lg object-cover flex-shrink-0" onerror="this.src='https://dummyimage.com/200x300/444/fff.png&text=Sem+Pôster'"/>
-                <div class="flex-1">
-                    <h3 id="detailTitle" class="text-3xl font-bold mb-2">Carregando...</h3>
-                    <p id="detailYearGenre" class="text-gray-400 text-sm mb-3">Ano | Gênero</p>
-                    <p id="detailPlot" class="text-gray-300 text-base mb-4">Carregando sinopse...</p>
-                    <p id="detailActors" class="text-gray-400 text-sm mb-2"><strong>Elenco:</strong> Carregando...</p>
-                    <p id="detailRating" class="text-gray-400 text-sm mb-4"><strong>Avaliação IMDb:</strong> Carregando...</p>
-                    <button id="playMovieButton" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-semibold w-full transition-colors flex items-center justify-center">
-                        ▶️ Assistir
-                    </button>
+        <section id="welcome">
+            <h2>Bem-vinda(o) ao Nosso Cantinho Especial!</h2>
+            <p style="text-align: center; font-size: 1.2em;">Este site foi feito com todo o carinho para celebrar o nosso amor e todas as memórias incríveis que construímos juntos. Feliz Dia dos Namorados!</p>
+        </section>
+
+        <section id="mural">
+            <h2>Nosso Mural de Momentos</h2>
+            <div class="mural-item">
+                <img src="https://via.placeholder.com/600x400?text=Nosso+Primeiro+Encontro" alt="Nosso primeiro encontro">
+                <p>Lembrando do nosso primeiro encontro, mal sabia que seria o início de tudo!</p>
+            </div>
+            <div class="mural-item">
+                <div class="video-responsive">
+                    <iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                            title="YouTube video player" frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen></iframe>
+                </div>
+                <p>Aquele vídeo que sempre nos faz rir! Nosso dia na Euclides da Cunha, Bahia!</p>
+            </div>
+            <div class="mural-item">
+                <img src="https://i.imgur.com/xjO1d0n.png" alt="Viagem inesquecível">
+                <p>Nossa viagem para Aracaju, um dos melhores momentos, primeira vez na praia!</p>
+            </div>
+        </section>
+
+        <section id="gallery">
+            <h2>Galeria de Memórias</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item">
+                    <img src="https://via.placeholder.com/400x300?text=Nosso+Primeiro+Role" alt="Memória 1">
+                    <div class="gallery-caption">Nosso primeiro role</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="https://via.placeholder.com/400x300?text=Passeio+no+Parque" alt="Memória 2">
+                    <div class="gallery-caption">Passeio no parque</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="https://via.placeholder.com/400x300?text=Dia+na+Praia" alt="Memória 3">
+                    <div class="gallery-caption">Dia na praia</div>
+                </div>
+                <div class="gallery-item">
+                    <img src="https://via.placeholder.com/400x300?text=Aniversario+de+Namoro" alt="Memória 4">
+                    <div class="gallery-caption">Nosso aniversário de namoro</div>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <section id="playlist">
+            <h2>Nossa Trilha Sonora do Amor</h2>
+            <div class="playlist-container">
+                <iframe src="Https://open.spotify.com/playlist/1wMbK7pUjCAvCvpT7o2AjH?si=hvD4HeHHSRSb4yqMRO1-Zw&pi=AhWf4m8RTI-Pk"
+                        width="100%" height="352" frameBorder="0" allowfullscreen=""
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"></iframe>
+            </div>
+        </section>
+
+        <footer>
+            <p>© 2025 Feito com amor para Luisa meu mozao por Rykelmy.</p>
+        </footer>
     </div>
-
-    <footer class="text-center text-gray-400 p-4 text-sm mt-auto">
-        © 2025 - UMA IDEIA QUE NASCEU NOS CORREDORES DO IFBA
-    </footer>
-
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
 
     <script>
-        // --- CHAVE DA OMDb API ---
-        const OMDb_API_KEY = 'fb0e86e11124588a98eb2e0c5909126c'; 
-        // --- FIM DA CHAVE ---
+        const countdownPage = document.getElementById('countdown-page');
+        const mainContent = document.getElementById('main-content');
+        const timerDisplay = document.getElementById('timer');
+        const accessButton = document.getElementById('access-button');
 
-        // CONFIGURE A URL DO PROXY AQUI
-        const PROXY_URL = 'https://cors-anywhere.herokuapp.com/'; 
-        // ATENÇÃO: Visite https://cors-anywhere.herokuapp.com/ uma vez antes de usar, para ativar o proxy.
+        const passwordToggleButton = document.getElementById('password-toggle-button');
+        const passwordInputContainer = document.getElementById('password-input-container');
+        const secretPasswordInput = document.getElementById('secret-password-input');
+        const submitPasswordButton = document.getElementById('submit-password-button');
+        const passwordMessage = document.getElementById('password-message');
 
-        const searchInput = document.getElementById('searchInput');
-        const categorySelect = document.getElementById('categorySelect');
-        const baixarBtn = document.getElementById('baixarListaBtn');
-        const loadSpinner = document.getElementById('loadSpinner');
-        const limparListaBtn = document.getElementById('limparListaBtn');
+        // **DEFINA A DATA E HORA ALVO AQUI**
+        // Definido para 12 de Junho de 2025, 00:00:00.
+        // A data atual é 10 de Junho de 2025.
+        const targetDate = new Date('June 12, 2025 00:00:00').getTime();
 
-        // Player de Filmes/Séries (HLS.js + Video HTML5 padrão)
-        const playerContainer = document.getElementById('playerContainer');
-        const player = document.getElementById('player');
-        const closePlayer = document.getElementById('closePlayer');
-        const prevEpisodeBtn = document.getElementById('prevEpisodeBtn');
-        const nextEpisodeBtn = document.getElementById('nextEpisodeBtn');
+        // **SUA SENHA SECRETA AQUI**
+        const correctPassword = "1234"; // VOCÊ PODE MUDAR ESTA SENHA
 
-        // NOVO: Player de TV Ao Vivo (Video.js)
-        const livePlayerContainer = document.getElementById('livePlayerContainer');
-        // Não precisamos pegar 'livePlayer' aqui diretamente, pois o Video.js o controlará.
-        let videoJsLivePlayer = null; // Variável para a instância do Video.js
-        const closeLivePlayer = document.getElementById('closeLivePlayer');
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
 
-        const episodesModal = document.getElementById('episodesModal');
-        const closeModal = document.getElementById('closeModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const episodesList = document.getElementById('episodesList');
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((((distance % (1000 * 60 * 60)) / (1000 * 60)) % 60)); // Correção na lógica de minutos
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        // Elementos para seções
-        const moviesSection = document.getElementById('moviesSection');
-        const seriesSection = document.getElementById('seriesSection');
-        const liveTvSection = document.getElementById('liveTvSection'); 
-        const showMoviesBtn = document.getElementById('showMoviesBtn');
-        const showSeriesBtn = document.getElementById('showSeriesBtn');
-        const showLiveTvBtn = document.getElementById('showLiveTvBtn'); 
-        const moviesGrid = document.getElementById('moviesGrid');
-        const seriesGrid = document.getElementById('seriesGrid');
-        const liveTvGrid = document.getElementById('liveTvGrid'); 
-
-        // Elementos do Modal de Detalhes
-        const detailsModal = document.getElementById('detailsModal');
-        const closeDetailsModal = document.getElementById('closeDetailsModal');
-        const detailPoster = document.getElementById('detailPoster');
-        const detailTitle = document.getElementById('detailTitle');
-        const detailYearGenre = document.getElementById('detailYearGenre');
-        const detailPlot = document.getElementById('detailPlot');
-        const detailActors = document.getElementById('detailActors');
-        const detailRating = document.getElementById('detailRating');
-        const playMovieButton = document.getElementById('playMovieButton');
-
-        let allItems = []; 
-        let filteredItems = [];
-
-        let moviesToDisplay = [];
-        let seriesToDisplay = {};
-        let liveTvToDisplay = []; 
-
-        let hlsInstance = null; // Para filmes/séries (ainda usamos HLS.js aqui)
-
-        let currentSeriesName = null;
-        let currentSeriesEps = [];
-        let currentEpIndex = null;
-        let currentPlayItem = null; 
-
-        const dbName = 'RykelmyFilmesDB';
-        const dbVersion = 2; 
-        const storeName = 'm3uStore';
-
-        // --- Funções de IndexedDB ---
-        function openDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(dbName, dbVersion);
-                request.onerror = (event) => {
-                    console.error("Erro IndexedDB ao abrir:", event.target.error);
-                    reject(event.target.error);
-                };
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains(storeName)) {
-                        db.createObjectStore(storeName);
-                    }
-                };
-                request.onsuccess = (event) => resolve(event.target.result);
-            });
-        }
-
-        async function saveToDB(key, data) {
-            const db = await openDB();
-            const tx = db.transaction(storeName, 'readwrite');
-            tx.objectStore(storeName).put(data, key);
-            return tx.complete;
-        }
-
-        async function getFromDB(key) {
-            const db = await openDB();
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction(storeName, 'readonly');
-                const store = tx.objectStore(storeName);
-                const request = store.get(key);
-                request.onsuccess = (event) => resolve(event.target.result || '');
-                request.onerror = (event) => reject(event.target.error);
-            });
-        }
-
-        async function clearDB() {
-            const db = await openDB();
-            const tx = db.transaction(storeName, 'readwrite');
-            tx.objectStore(storeName).clear();
-            return tx.complete;
-        }
-
-        // --- Funções de Parsing e Agrupamento ---
-        function parseM3U(text) {
-            const lines = text.split(/\r?\n/);
-            const items = [];
-
-            for (let i = 0; i < lines.length; i++) {
-                if (lines[i].startsWith('#EXTINF')) {
-                    const title = (lines[i].match(/,(.*)/) || [])[1]?.trim();
-                    const thumb = (lines[i].match(/tvg-logo="(.*?)"/) || [])[1] || 'https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem';
-                    const group = (lines[i].match(/group-title="(.*?)"/) || [])[1] || '';
-                    const url = lines[i+1]?.trim();
-                    
-                    // Apenas verifica se é uma URL http válida (sem verificar extensão)
-                    if (url && url.startsWith('http')) { 
-                        items.push({ title, url, thumb, group });
-                    }
-                }
-            }
-            return items;
-        }
-
-        // groupItems: Lógica de separação melhorada para evitar misturas
-        function groupItems(items) {
-            const series = {};
-            const movies = [];
-            const liveTv = []; 
-
-            items.forEach(item => {
-                const groupLower = item.group.toLowerCase();
-                const titleLower = item.title.toLowerCase();
-                
-                // 1. Tenta identificar se é SÉRIE (padrão SXXEXX no título)
-                const isSeriesEpisode = titleLower.match(/[\s\.-]?[sS]\d+[eE]\d+/);
-
-                if (isSeriesEpisode) {
-                    const name = titleLower.replace(/[\s\.-]?[sS]\d+[eE]\d+/, '').trim();
-                    series[name] = series[name] || [];
-                    series[name].push(item);
-                } 
-                // 2. Tenta identificar se é TV AO VIVO (por palavras-chave no group-title)
-                else if (groupLower.includes('ao vivo') || 
-                           groupLower.includes('live tv') || 
-                           groupLower.includes('canais') || 
-                           groupLower.includes('abertos') || 
-                           groupLower.includes('esportes') || 
-                           groupLower.includes('noticias') || 
-                           groupLower.includes('documentarios') ||
-                           groupLower.includes('infantil') ||
-                           groupLower.includes('variedades') ||
-                           groupLower.includes('musica') ||
-                           groupLower.includes('adulto') || 
-                           groupLower.includes('radios') ||
-                           // TERMOS ADICIONADOS COM BASE NAS SUAS ENTRADAS DE EXEMPLO:
-                           groupLower.includes('noticias jornalismo') || 
-                           groupLower.includes('globo - principais') 
-                        ) {
-                    liveTv.push(item);
-                }
-                // 3. O que sobrou (não é série, não é claramente TV ao vivo pelo grupo) é considerado FILME
-                else {
-                    movies.push(item);
-                }
-            });
-
-            // Ordena os episódios de cada série
-            for (const name in series) {
-                series[name].sort((a, b) => {
-                    const aMatch = a.title.match(/[sS](\d+)[eE](\d+)/);
-                    const bMatch = b.title.match(/[sS](\d+)[eE](\d+)/);
-                    if (!aMatch || !bMatch) return 0;
-                    const sA = parseInt(aMatch[1]);
-                    const eA = parseInt(aMatch[2]);
-                    const sB = parseInt(bMatch[1]);
-                    const eB = parseInt(bMatch[2]);
-
-                    if (sA !== sB) return sA - sB;
-                    return eA - eB;
-                });
-            }
-            return { series, movies, liveTv }; 
-        }
-
-        // --- FUNÇÃO PARA BUSCAR DETALHES DA API OMDb ---
-        async function fetchDetailsFromOMDb(title, type = 'movie') {
-            if (!OMDb_API_KEY || OMDb_API_KEY === 'SUA_CHAVE_AQUI') {
-                console.warn("Chave da OMDb API não configurada. Detalhes não serão carregados.");
-                return null;
-            }
-            let yearMatch = title.match(/\((\d{4})\)/);
-            let year = yearMatch ? yearMatch[1] : '';
-            let cleanedTitle = title.replace(/[\s\.-]?[sS]\d+[eE]\d+/, '').replace(/\(\d{4}\)/, '').trim();
-            const url = `https://www.omdbapi.com/?apikey=${OMDb_API_KEY}&t=${encodeURIComponent(cleanedTitle)}&type=${type}&y=${year}&plot=full&r=json`;
-
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-
-                if (data.Response === "True") {
-                    return {
-                        title: data.Title,
-                        year: data.Year,
-                        genre: data.Genre,
-                        plot: data.Plot !== "N/A" ? data.Plot : "Sinopse não disponível.",
-                        poster: data.Poster !== "N/A" ? data.Poster : 'https://dummyimage.com/200x300/444/fff.png&text=Sem+Pôster',
-                        actors: data.Actors !== "N/A" ? data.Actors : "Informação não disponível.",
-                        imdbRating: data.imdbRating !== "N/A" ? data.imdbRating : "N/A",
-                    };
-                } else {
-                    console.warn(`Detalhes para "${title}" não encontrados na OMDb: ${data.Error}`);
-                    return null;
-                }
-            } catch (error) {
-                console.error("Erro ao buscar detalhes na OMDb:", error);
-                return null;
-            }
-        }
-
-        // --- Funções de Renderização Geral ---
-        function renderContent() {
-            const { series, movies, liveTv } = groupItems(filteredItems);
-            moviesToDisplay = movies;
-            seriesToDisplay = series;
-            liveTvToDisplay = liveTv; 
-
-            renderMoviesGrid();
-            renderSeriesGrid();
-            renderLiveTvGrid(); 
-        }
-
-        function renderMoviesGrid() {
-            moviesGrid.innerHTML = '';
-
-            if (moviesToDisplay.length === 0) {
-                moviesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhum filme encontrado.</div>';
-                return;
-            }
-
-            moviesToDisplay.forEach(item => {
-                const isLast = localStorage.getItem('last_film') === item.title;
-                const card = document.createElement('div');
-                card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-105 transition duration-300 overflow-hidden';
-                card.innerHTML = `
-                    <img src="${item.thumb}" alt="${item.title}" class="aspect-video object-cover rounded-lg mb-2 w-full" onerror="this.src='https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem'"/>
-                    <h3 class="text-sm truncate flex justify-between items-center">
-                        <span>${item.title}</span> ${isLast ? '<span class="text-red-500 text-xs">🔴 Visto</span>' : ''}
-                    </h3>`;
-                card.onclick = () => openDetailsModal(item, 'movie');
-                moviesGrid.appendChild(card);
-            });
-        }
-
-        function renderSeriesGrid() {
-            seriesGrid.innerHTML = '';
-
-            if (Object.keys(seriesToDisplay).length === 0) {
-                seriesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhuma série encontrada.</div>';
-                return;
-            }
-
-            Object.entries(seriesToDisplay).forEach(([name, eps]) => {
-                const thumb = eps[0].thumb;
-                const card = document.createElement('div');
-                card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-105 transition duration-300 overflow-hidden';
-                card.innerHTML = `
-                    <img src="${thumb}" alt="${name}" class="aspect-video object-cover rounded-lg mb-2 w-full" onerror="this.src='https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem'"/>
-                    <h3 class="font-bold text-center truncate">${name}</h3>
-                    <p class="text-sm text-center text-gray-400">${eps.length} episódios</p>`;
-                card.onclick = () => openDetailsModal(eps[0], 'series');
-                seriesGrid.appendChild(card);
-            });
-        }
-
-        // NOVA: Função para renderizar o grid de TV Ao Vivo
-        function renderLiveTvGrid() {
-            liveTvGrid.innerHTML = '';
-
-            if (liveTvToDisplay.length === 0) {
-                liveTvGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhum canal ao vivo encontrado com os grupos configurados.</div>';
-                return;
-            }
-
-            liveTvToDisplay.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-105 transition duration-300 overflow-hidden';
-                card.innerHTML = `
-                    <img src="${item.thumb}" alt="${item.title}" class="aspect-video object-cover rounded-lg mb-2 w-full" onerror="this.src='https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem'"/>
-                    <h3 class="text-sm truncate text-center">${item.title}</h3>`;
-                card.onclick = () => playLiveChannel(item); 
-                liveTvGrid.appendChild(card);
-            });
-        }
-
-        // --- Funções de Filtragem e Categoria ---
-        function filterItems() {
-            const q = searchInput.value.toLowerCase();
-            const cat = categorySelect.value;
-
-            filteredItems = allItems.filter(i =>
-                i.title.toLowerCase().includes(q) &&
-                (!cat || i.group === cat)
-            );
-            renderContent();
-        }
-
-        function updateCategories() {
-            const cats = [...new Set(allItems.map(i => i.group).filter(Boolean))].sort();
-            categorySelect.innerHTML = '<option value="">Todas as Categorias</option>';
-            cats.forEach(c => {
-                const o = document.createElement('option');
-                o.value = c;
-                o.textContent = c;
-                categorySelect.appendChild(o);
-            });
-        }
-
-        // --- Funções de Player de Vídeo e Modal de Episódios ---
-        function openSeries(name, eps) {
-            currentSeriesName = name;
-            currentSeriesEps = eps;
-            modalTitle.textContent = name;
-            episodesList.innerHTML = '';
-            const last = localStorage.getItem(`last_${name}`);
-            eps.forEach((ep, idx) => {
-                const btn = document.createElement('button');
-                btn.className = 'w-full text-left p-2 bg-gray-700 rounded hover:bg-gray-600 flex justify-between items-center transition-colors';
-                btn.innerHTML = `<span>${ep.title}</span>${ep.title===last?'<span class="text-red-500 text-xs ml-2">🔴 Visto</span>':''}`;
-                btn.onclick = () => playEpisode(idx);
-                episodesList.appendChild(btn);
-            });
-            episodesModal.classList.remove('hidden');
-            episodesModal.classList.add('flex');
-        }
-
-        function playEpisode(idx) {
-            currentEpIndex = idx;
-            const ep = currentSeriesEps[idx];
-            localStorage.setItem(`last_${currentSeriesName}`, ep.title);
-            openVideoLink(ep); 
-            episodesModal.classList.add('hidden');
-            episodesModal.classList.remove('flex');
-        }
-
-        let lastTimeSaved = 0;
-        function onTimeUpdate(event) {
-            const player = event.target;
-            const savedTimeKey = `time_${player.dataset.currentItemTitle}`;
-            if (Math.floor(player.currentTime) % 5 === 0 && Math.floor(player.currentTime) !== lastTimeSaved) {
-                localStorage.setItem(savedTimeKey, player.currentTime);
-                lastTimeSaved = Math.floor(player.currentTime);
-            }
-            if (player.ended) {
-                localStorage.setItem(savedTimeKey, 0);
-            }
-        }
-
-        // Função para reproduzir Filmes e Séries (player principal HLS.js)
-        function openVideoLink(item) {
-            // Garante que o player de TV ao vivo esteja fechado e parado
-            closeLivePlayer.click();
-            
-            if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-
-            player.dataset.currentItemTitle = item.title;
-            player.removeEventListener('timeupdate', onTimeUpdate);
-
-            if (!currentSeriesName) { // Se for um filme
-                localStorage.setItem('last_film', item.title);
-                renderMoviesGrid(); // Atualiza o "Visto"
-            }
-
-            const savedTimeKey = `time_${item.title}`;
-            const savedTime = parseFloat(localStorage.getItem(savedTimeKey)) || 0;
-
-            // Aplica o proxy para o URL do stream
-            const streamUrl = item.url.startsWith('http') ? PROXY_URL + item.url : item.url; 
-
-            if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) { 
-                hlsInstance = new Hls();
-                hlsInstance.loadSource(streamUrl); 
-                hlsInstance.attachMedia(player);
-                hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-                    if (savedTime > 0) {
-                        player.currentTime = savedTime;
-                    }
-                    player.play().catch(() => {});
-                });
+            if (distance < 0) {
+                timerDisplay.innerHTML = "O momento chegou!";
+                accessButton.style.display = 'block';
+                // Opcional: para abrir automaticamente após a data, descomente a linha abaixo.
+                // showMainContent();
             } else {
-                player.src = streamUrl; 
-                player.addEventListener('loadedmetadata', function resume() {
-                    if (savedTime > 0) {
-                        player.currentTime = savedTime;
-                    }
-                    player.play().catch(() => {});
-                    player.removeEventListener('loadedmetadata', resume);
-                });
+                timerDisplay.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
             }
+        }
 
-            playerContainer.classList.remove('hidden');
-            player.addEventListener('timeupdate', onTimeUpdate);
-            player.muted = false; 
+        function showMainContent() {
+            countdownPage.style.display = 'none';
+            mainContent.style.display = 'block';
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            clearInterval(countdownInterval); // Para a atualização do contador
         }
 
-        // NOVO: Função para reproduzir TV Ao Vivo (player Video.js)
-        function playLiveChannel(item) {
-            // Garante que o player de filmes/séries esteja fechado e parado
-            closePlayer.click();
+        // Evento para o botão de acesso (após a contagem)
+        accessButton.addEventListener('click', showMainContent);
 
-            // Destroi a instância existente do Video.js se houver
-            if (videoJsLivePlayer) {
-                videoJsLivePlayer.dispose(); // Importante para liberar recursos
-                videoJsLivePlayer = null;
-            }
-            
-            // Aplica o proxy para o URL do stream
-            const streamUrl = item.url.startsWith('http') ? PROXY_URL + item.url : item.url; 
-
-            // Opções para o Video.js
-            const videoJsOptions = {
-                autoplay: true, // Inicia automaticamente
-                controls: true, // Mostra os controles
-                fluid: true,    // Ajusta a largura e mantém a proporção 16:9
-                preload: 'auto',
-                liveui: true,   // Ativa UI para live (para Video.js 8+)
-                sources: [{
-                    src: streamUrl,
-                    type: 'application/x-mpegURL' // Tipo para HLS
-                }]
-            };
-
-            // Inicializa o player Video.js
-            videoJsLivePlayer = videojs('livePlayer', videoJsOptions);
-
-            // Tenta reproduzir. Em alguns navegadores, autoplay pode ser bloqueado
-            videoJsLivePlayer.ready(function() {
-                this.play().catch(error => {
-                    console.error("Erro ao tentar reproduzir com Video.js:", error);
-                    alert("Erro ao iniciar a reprodução do canal. Verifique o console para mais detalhes ou tente outro canal.");
-                });
-            });
-
-            livePlayerContainer.classList.remove('hidden');
-            // O Video.js já gerencia o estado de mute através das opções ou do próprio UI
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // Event listener para fechar o player principal (inalterado)
-        closePlayer.onclick = () => {
-            player.pause();
-            player.src = '';
-            if (hlsInstance) {
-                hlsInstance.destroy();
-                hlsInstance = null;
-            }
-            playerContainer.classList.add('hidden');
-            player.removeEventListener('timeupdate', onTimeUpdate);
-            currentSeriesName = null; 
-            currentEpIndex = null;
-        };
-
-        // NOVO: Event listener para fechar o player de TV ao vivo (agora destrói Video.js)
-        closeLivePlayer.onclick = () => {
-            if (videoJsLivePlayer) {
-                videoJsLivePlayer.dispose(); // Destroi a instância do Video.js
-                videoJsLivePlayer = null;
-            }
-            livePlayerContainer.classList.add('hidden');
-        };
-
-        // --- Funções do Modal de Detalhes ---
-        async function openDetailsModal(item, type) {
-            // Garante que ambos os players estejam fechados quando o modal de detalhes abrir
-            closePlayer.click();
-            closeLivePlayer.click(); // Garante que Video.js também é fechado
-
-            currentPlayItem = item;
-            detailsModal.classList.remove('hidden');
-            detailsModal.classList.add('flex');
-
-            // Reseta o conteúdo para "Carregando..."
-            detailPoster.src = 'https://dummyimage.com/200x300/444/fff.png&text=Carregando...';
-            detailTitle.textContent = 'Carregando...';
-            detailYearGenre.textContent = 'Ano | Gênero';
-            detailPlot.textContent = 'Carregando sinopse...';
-            detailActors.textContent = 'Elenco: Carregando...';
-            detailRating.textContent = 'Avaliação IMDb: Carregando...';
-            playMovieButton.textContent = type === 'movie' ? '▶️ Assistir Filme' : '▶️ Ver Episódios';
-
-            // Se for uma série, o botão de assistir deve abrir o modal de episódios
-            if (type === 'series') {
-                playMovieButton.onclick = () => {
-                    closeDetailsModal.click(); 
-                    const seriesName = item.title.replace(/[\s\.-]?[sS]\d+[eE]\d+/, '').trim();
-                    const seriesData = seriesToDisplay[seriesName];
-                    if (seriesData) {
-                        openSeries(seriesName, seriesData);
-                    } else {
-                        alert("Série não encontrada para exibir episódios.");
-                    }
-                };
-            } else { // Se for filme, o botão de assistir deve tocar o filme diretamente
-                playMovieButton.onclick = () => {
-                    closeDetailsModal.click(); 
-                    openVideoLink(item); 
-                };
-            }
-
-            // Busca os detalhes da API OMDb
-            const details = await fetchDetailsFromOMDb(item.title, type);
-            if (details) {
-                detailPoster.src = details.poster;
-                detailTitle.textContent = details.title;
-                detailYearGenre.textContent = `${details.year} | ${details.genre}`;
-                detailPlot.textContent = details.plot;
-                detailActors.textContent = `Elenco: ${details.actors}`;
-                detailRating.textContent = `Avaliação IMDb: ${details.imdbRating}`;
-            } else {
-                // Se não encontrar na API, usa os dados do M3U e avisa
-                detailPoster.src = item.thumb;
-                detailTitle.textContent = item.title;
-                detailYearGenre.textContent = 'Informação não disponível';
-                detailPlot.textContent = 'Não foi possível carregar a sinopse detalhada.';
-                detailActors.textContent = 'Elenco: N/A';
-                detailRating.textContent = 'Avaliação IMDb: N/A';
-            }
-        }
-
-        closeDetailsModal.onclick = () => {
-            detailsModal.classList.add('hidden');
-            detailsModal.classList.remove('flex');
-            currentPlayItem = null; 
-        };
-
-        // --- Event Listeners dos Botões Principais e Filtros ---
-        searchInput.oninput = filterItems;
-        categorySelect.onchange = filterItems;
-
-        // --- Funções de Carregamento da Lista ---
-        async function loadList() {
-            loadSpinner.classList.remove('hidden');
-            baixarBtn.disabled = true;
-            limparListaBtn.disabled = true;
-            searchInput.disabled = true;
-            categorySelect.disabled = true;
-
-            try {
-                // URL do seu arquivo M3U
-                const playlistUrl = 'https://masteriptv.tech/get.php?username=393880589&password=335139230&type=m3u_plus&output=ts';
-                const res = await fetch(playlistUrl);
-                if (!res.ok) {
-                    throw new Error(`Erro HTTP! Status: ${res.status} - ${res.statusText}`);
-                }
-                const text = await res.text();
-
-                await saveToDB('m3u_data', text);
-                allItems = parseM3U(text); 
-                updateCategories();
-                filterItems();
-
-                alert('Lista de conteúdo carregada com sucesso!');
-
-            } catch (e) {
-                console.error("Erro detalhado ao carregar lista:", e);
-                alert('Erro ao carregar lista: ' + e.message + '. Por favor, verifique sua conexão ou a URL da lista.');
-            } finally {
-                loadSpinner.classList.add('hidden');
-                baixarBtn.disabled = false;
-                limparListaBtn.disabled = false;
-                searchInput.disabled = false;
-                categorySelect.disabled = false;
-            }
-        }
-
-        baixarBtn.onclick = loadList;
-
-        limparListaBtn.onclick = async () => {
-            if (confirm('Tem certeza que deseja ATUALIZAR a lista? Isso apagará os dados salvos e recarregará a página.')) {
-                await clearDB();
-                location.reload();
-            }
-        };
-
-        // --- Lógica de Navegação de Seção ---
-        function showSection(sectionElement) {
-            // Oculta todas as seções
-            moviesSection.classList.add('hidden');
-            seriesSection.classList.add('hidden');
-            liveTvSection.classList.add('hidden'); 
-
-            // Oculta ambos os containers de player
-            playerContainer.classList.add('hidden'); 
-            livePlayerContainer.classList.add('hidden'); 
-
-            // Pausa e destrói instâncias HLS.js (filmes/séries)
-            player.pause();
-            if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-
-            // Pausa e destrói instância Video.js (TV ao vivo)
-            if (videoJsLivePlayer) {
-                videoJsLivePlayer.dispose();
-                videoJsLivePlayer = null;
-            }
-
-            // Exibe a seção clicada
-            sectionElement.classList.remove('hidden');
-            
-            // Reseta o estado do player principal para filmes/séries (útil ao voltar para eles)
-            currentSeriesName = null;
-            currentEpIndex = null;
-        }
-
-        showMoviesBtn.onclick = () => showSection(moviesSection);
-        showSeriesBtn.onclick = () => showSection(seriesSection);
-        showLiveTvBtn.onclick = () => showSection(liveTvSection); 
-
-        // --- Inicialização ---
-        getFromDB('m3u_data').then(text => {
-            if (text) {
-                allItems = parseM3U(text); 
-                updateCategories();
-                filterItems();
-            } else {
-                moviesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Clique em "CARREGAR LISTA DE CONTEUDO" para começar!</div>';
-                seriesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhuma série disponível ainda. Carregue a lista de conteúdo.</div>';
-                liveTvGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhum canal ao vivo disponível ainda. Carregue a lista de conteúdo.</div>'; 
-            }
-        }).catch(e => {
-            console.error("Erro ao carregar dados salvos do IndexedDB:", e);
-            alert("Erro ao carregar dados salvos. Por favor, tente limpar os dados do site no seu navegador e recarregue a página.");
-            moviesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Erro ao carregar dados.</div>';
-            seriesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Erro ao carregar dados.</div>';
-            liveTvGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Erro ao carregar dados.</div>'; 
+        // Evento para o botão "Já sabe a senha secreta?"
+        passwordToggleButton.addEventListener('click', () => {
+            passwordInputContainer.style.display = 'flex'; // Mudado para flex para melhor alinhamento
+            passwordToggleButton.style.display = 'none'; // Esconde o botão de senha
+            secretPasswordInput.focus(); // Coloca o foco no campo de senha
         });
 
-        // Inicialmente mostra a seção de filmes
-        showSection(moviesSection);
+        // Evento para o botão de submeter a senha
+        submitPasswordButton.addEventListener('click', () => {
+            const enteredPassword = secretPasswordInput.value;
+            if (enteredPassword === correctPassword) {
+                passwordMessage.style.color = 'green';
+                passwordMessage.textContent = 'Senha correta! Redirecionando...';
+                setTimeout(showMainContent, 1000); // Mostra o site após 1 segundo
+            } else {
+                passwordMessage.style.color = '#d8435d';
+                passwordMessage.textContent = 'Senha incorreta. Tente novamente.';
+                secretPasswordInput.value = ''; // Limpa o campo
+            }
+        });
+
+        // Permite submeter a senha com "Enter"
+        secretPasswordInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                submitPasswordButton.click();
+            }
+        });
+
+        // Inicia a contagem regressiva
+        const countdownInterval = setInterval(updateCountdown, 1000);
+
+        // Atualiza a contagem uma vez ao carregar a página
+        updateCountdown();
+
+        // **PARA TESTES RÁPIDOS:**
+        // Se você quiser ver o site principal imediatamente para testar o layout sem esperar,
+        // DESCOMENTE a linha abaixo. Lembre-se de COMENTÁ-LA novamente antes de salvar para o Dia dos Namorados!
+        // showMainContent();
     </script>
 </body>
 </html>
