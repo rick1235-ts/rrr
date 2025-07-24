@@ -6,7 +6,6 @@
     <title>🍿 CINEBLACK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <style>
         /* Ajuste para o padding do container principal */
         .p-6 {
@@ -17,19 +16,6 @@
                 padding: 2rem;
             }
         }
-        /* Estilos para o overlay do modal de detalhes */
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.8);
-        }
-        /* Estilos para o player Video.js */
-        #livePlayer {
-            width: 100%; /* Garante que o player ocupe a largura total */
-            height: 400px; /* Altura padrão, Video.js pode ajustar com 'fluid' */
-        }
-        /* Responsividade para o Video.js */
-        .video-js.vjs-fluid {
-            padding-top: 56.25%; /* Proporção 16:9 */
-        }
     </style>
 </head>
 <body class="bg-black text-white font-sans min-h-screen flex flex-col">
@@ -38,7 +24,7 @@
         <nav>
             <button id="showMoviesBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Filmes</button>
             <button id="showSeriesBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Séries</button>
-            <button id="showLiveTvBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md mx-2 transition-colors">Ao Vivo</button> </nav>
+        </nav>
     </header>
 
     <div class="p-6 max-w-7xl mx-auto flex-1 w-full">
@@ -65,11 +51,6 @@
             <button id="closePlayer" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-lg transition-colors">✖</button>
         </div>
 
-        <div id="livePlayerContainer" class="relative mb-10 hidden">
-            <video id="livePlayer" class="video-js vjs-default-skin vjs-big-play-button-centered" controls preload="auto" data-setup='{"autoplay": true, "fluid": true}'></video>
-            <button id="closeLivePlayer" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-lg transition-colors">✖</button>
-        </div>
-
         <div id="moviesSection">
             <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-center uppercase tracking-wide text-pink-500">
                 🎬 Filmes Disponíveis
@@ -91,17 +72,6 @@
                 </div>
             </div>
         </div>
-
-        <div id="liveTvSection" class="hidden">
-            <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-center uppercase tracking-wide text-pink-500 mt-10">
-                📡 TV Ao Vivo
-            </h2>
-            <div id="liveTvGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <div class="text-center text-gray-400 py-10 col-span-full">
-                    Carregando canais ao vivo...
-                </div>
-            </div>
-        </div>
     </div>
 
     <div id="episodesModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
@@ -112,112 +82,59 @@
         </div>
     </div>
 
-    <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 modal-overlay">
-        <div class="bg-gray-900 rounded-xl p-6 max-w-2xl w-full relative mx-4 max-h-[90vh] overflow-y-auto">
-            <button id="closeDetailsModal" class="absolute top-3 right-3 text-white text-2xl font-bold">&times;</button>
-            <div class="flex flex-col md:flex-row gap-6">
-                <img id="detailPoster" src="https://dummyimage.com/200x300/444/fff.png&text=Carregando..." alt="Pôster" class="w-full md:w-1/3 rounded-lg object-cover flex-shrink-0" onerror="this.src='https://dummyimage.com/200x300/444/fff.png&text=Sem+Pôster'"/>
-                <div class="flex-1">
-                    <h3 id="detailTitle" class="text-3xl font-bold mb-2">Carregando...</h3>
-                    <p id="detailYearGenre" class="text-gray-400 text-sm mb-3">Ano | Gênero</p>
-                    <p id="detailPlot" class="text-gray-300 text-base mb-4">Carregando sinopse...</p>
-                    <p id="detailActors" class="text-gray-400 text-sm mb-2"><strong>Elenco:</strong> Carregando...</p>
-                    <p id="detailRating" class="text-gray-400 text-sm mb-4"><strong>Avaliação IMDb:</strong> Carregando...</p>
-                    <button id="playMovieButton" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-semibold w-full transition-colors flex items-center justify-center">
-                        ▶️ Assistir
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <footer class="text-center text-gray-400 p-4 text-sm mt-auto">
         © 2025 - UMA IDEIA QUE NASCEU NOS CORREDORES DO IFBA
     </footer>
 
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-
     <script>
-        // --- CHAVE DA OMDb API ---
-        const OMDb_API_KEY = 'fb0e86e11124588a98eb2e0c5909126c'; 
-        // --- FIM DA CHAVE ---
-
-        // CONFIGURE A URL DO PROXY AQUI
-        const PROXY_URL = 'https://cors-anywhere.herokuapp.com/'; 
-        // ATENÇÃO: Visite https://cors-anywhere.herokuapp.com/ uma vez antes de usar, para ativar o proxy.
-
         const searchInput = document.getElementById('searchInput');
         const categorySelect = document.getElementById('categorySelect');
         const baixarBtn = document.getElementById('baixarListaBtn');
         const loadSpinner = document.getElementById('loadSpinner');
-        const limparListaBtn = document.getElementById('limparListaBtn');
-
-        // Player de Filmes/Séries (HLS.js + Video HTML5 padrão)
         const playerContainer = document.getElementById('playerContainer');
         const player = document.getElementById('player');
         const closePlayer = document.getElementById('closePlayer');
         const prevEpisodeBtn = document.getElementById('prevEpisodeBtn');
         const nextEpisodeBtn = document.getElementById('nextEpisodeBtn');
-
-        // NOVO: Player de TV Ao Vivo (Video.js)
-        const livePlayerContainer = document.getElementById('livePlayerContainer');
-        // Não precisamos pegar 'livePlayer' aqui diretamente, pois o Video.js o controlará.
-        let videoJsLivePlayer = null; // Variável para a instância do Video.js
-        const closeLivePlayer = document.getElementById('closeLivePlayer');
-
         const episodesModal = document.getElementById('episodesModal');
         const closeModal = document.getElementById('closeModal');
         const modalTitle = document.getElementById('modalTitle');
         const episodesList = document.getElementById('episodesList');
+        const limparListaBtn = document.getElementById('limparListaBtn');
 
         // Elementos para seções
         const moviesSection = document.getElementById('moviesSection');
         const seriesSection = document.getElementById('seriesSection');
-        const liveTvSection = document.getElementById('liveTvSection'); 
         const showMoviesBtn = document.getElementById('showMoviesBtn');
         const showSeriesBtn = document.getElementById('showSeriesBtn');
-        const showLiveTvBtn = document.getElementById('showLiveTvBtn'); 
-        const moviesGrid = document.getElementById('moviesGrid');
+        const moviesGrid = document.getElementById('moviesGrid'); // Agora é moviesGrid, não moviesWrapper
         const seriesGrid = document.getElementById('seriesGrid');
-        const liveTvGrid = document.getElementById('liveTvGrid'); 
 
-        // Elementos do Modal de Detalhes
-        const detailsModal = document.getElementById('detailsModal');
-        const closeDetailsModal = document.getElementById('closeDetailsModal');
-        const detailPoster = document.getElementById('detailPoster');
-        const detailTitle = document.getElementById('detailTitle');
-        const detailYearGenre = document.getElementById('detailYearGenre');
-        const detailPlot = document.getElementById('detailPlot');
-        const detailActors = document.getElementById('detailActors');
-        const detailRating = document.getElementById('detailRating');
-        const playMovieButton = document.getElementById('playMovieButton');
+        let allItems = []; // Todos os itens brutos da lista M3U
+        let filteredItems = []; // Itens após aplicação de filtro de busca e categoria
 
-        let allItems = []; 
-        let filteredItems = [];
-
+        // Variáveis para guardar filmes e séries já agrupados para renderização
         let moviesToDisplay = [];
         let seriesToDisplay = {};
-        let liveTvToDisplay = []; 
 
-        let hlsInstance = null; // Para filmes/séries (ainda usamos HLS.js aqui)
+        let hlsInstance = null;
+        // REMOVIDO: let mySwiper = null; // Não precisamos mais do Swiper
 
         let currentSeriesName = null;
         let currentSeriesEps = [];
         let currentEpIndex = null;
-        let currentPlayItem = null; 
 
         const dbName = 'RykelmyFilmesDB';
-        const dbVersion = 2; 
+        // ATENÇÃO: Incrementada a versão do banco de dados.
+        // Se ainda der erro de IndexedDB, pode tentar 3, 4, etc., e/ou limpe os dados do site no navegador.
+        const dbVersion = 2;
         const storeName = 'm3uStore';
 
         // --- Funções de IndexedDB ---
         function openDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(dbName, dbVersion);
-                request.onerror = (event) => {
-                    console.error("Erro IndexedDB ao abrir:", event.target.error);
-                    reject(event.target.error);
-                };
+                request.onerror = () => reject(request.error);
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
                     if (!db.objectStoreNames.contains(storeName)) {
@@ -257,6 +174,7 @@
         function parseM3U(text) {
             const lines = text.split(/\r?\n/);
             const items = [];
+            const vodExt = /\.(mp4|mkv|mov|avi|webm|m3u8)$/i;
 
             for (let i = 0; i < lines.length; i++) {
                 if (lines[i].startsWith('#EXTINF')) {
@@ -264,9 +182,7 @@
                     const thumb = (lines[i].match(/tvg-logo="(.*?)"/) || [])[1] || 'https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem';
                     const group = (lines[i].match(/group-title="(.*?)"/) || [])[1] || '';
                     const url = lines[i+1]?.trim();
-                    
-                    // Apenas verifica se é uma URL http válida (sem verificar extensão)
-                    if (url && url.startsWith('http')) { 
+                    if (url && url.startsWith('http') && group.toLowerCase() !== 'ao vivo' && vodExt.test(url)) {
                         items.push({ title, url, thumb, group });
                     }
                 }
@@ -274,55 +190,27 @@
             return items;
         }
 
-        // groupItems: Lógica de separação melhorada para evitar misturas
         function groupItems(items) {
             const series = {};
             const movies = [];
-            const liveTv = []; 
-
             items.forEach(item => {
-                const groupLower = item.group.toLowerCase();
-                const titleLower = item.title.toLowerCase();
-                
-                // 1. Tenta identificar se é SÉRIE (padrão SXXEXX no título)
-                const isSeriesEpisode = titleLower.match(/[\s\.-]?[sS]\d+[eE]\d+/);
-
-                if (isSeriesEpisode) {
-                    const name = titleLower.replace(/[\s\.-]?[sS]\d+[eE]\d+/, '').trim();
+                // Regex para capturar "Nome da Série SXXEXX"
+                const match = item.title.match(/^(.*?)[\s\.-]?[sS](\d+)[eE](\d+)/);
+                if (match) {
+                    const name = match[1].trim();
                     series[name] = series[name] || [];
                     series[name].push(item);
-                } 
-                // 2. Tenta identificar se é TV AO VIVO (por palavras-chave no group-title)
-                else if (groupLower.includes('ao vivo') || 
-                           groupLower.includes('live tv') || 
-                           groupLower.includes('canais') || 
-                           groupLower.includes('abertos') || 
-                           groupLower.includes('esportes') || 
-                           groupLower.includes('noticias') || 
-                           groupLower.includes('documentarios') ||
-                           groupLower.includes('infantil') ||
-                           groupLower.includes('variedades') ||
-                           groupLower.includes('musica') ||
-                           groupLower.includes('adulto') || 
-                           groupLower.includes('radios') ||
-                           // TERMOS ADICIONADOS COM BASE NAS SUAS ENTRADAS DE EXEMPLO:
-                           groupLower.includes('noticias jornalismo') || 
-                           groupLower.includes('globo - principais') 
-                        ) {
-                    liveTv.push(item);
-                }
-                // 3. O que sobrou (não é série, não é claramente TV ao vivo pelo grupo) é considerado FILME
-                else {
+                } else {
                     movies.push(item);
                 }
             });
 
-            // Ordena os episódios de cada série
+            // Ordenar episódios de séries por temporada e episódio
             for (const name in series) {
                 series[name].sort((a, b) => {
                     const aMatch = a.title.match(/[sS](\d+)[eE](\d+)/);
                     const bMatch = b.title.match(/[sS](\d+)[eE](\d+)/);
-                    if (!aMatch || !bMatch) return 0;
+                    if (!aMatch || !bMatch) return 0; // Caso não encontre SXXEXX
                     const sA = parseInt(aMatch[1]);
                     const eA = parseInt(aMatch[2]);
                     const sB = parseInt(bMatch[1]);
@@ -332,64 +220,34 @@
                     return eA - eB;
                 });
             }
-            return { series, movies, liveTv }; 
-        }
 
-        // --- FUNÇÃO PARA BUSCAR DETALHES DA API OMDb ---
-        async function fetchDetailsFromOMDb(title, type = 'movie') {
-            if (!OMDb_API_KEY || OMDb_API_KEY === 'SUA_CHAVE_AQUI') {
-                console.warn("Chave da OMDb API não configurada. Detalhes não serão carregados.");
-                return null;
-            }
-            let yearMatch = title.match(/\((\d{4})\)/);
-            let year = yearMatch ? yearMatch[1] : '';
-            let cleanedTitle = title.replace(/[\s\.-]?[sS]\d+[eE]\d+/, '').replace(/\(\d{4}\)/, '').trim();
-            const url = `https://www.omdbapi.com/?apikey=${OMDb_API_KEY}&t=${encodeURIComponent(cleanedTitle)}&type=${type}&y=${year}&plot=full&r=json`;
-
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-
-                if (data.Response === "True") {
-                    return {
-                        title: data.Title,
-                        year: data.Year,
-                        genre: data.Genre,
-                        plot: data.Plot !== "N/A" ? data.Plot : "Sinopse não disponível.",
-                        poster: data.Poster !== "N/A" ? data.Poster : 'https://dummyimage.com/200x300/444/fff.png&text=Sem+Pôster',
-                        actors: data.Actors !== "N/A" ? data.Actors : "Informação não disponível.",
-                        imdbRating: data.imdbRating !== "N/A" ? data.imdbRating : "N/A",
-                    };
-                } else {
-                    console.warn(`Detalhes para "${title}" não encontrados na OMDb: ${data.Error}`);
-                    return null;
-                }
-            } catch (error) {
-                console.error("Erro ao buscar detalhes na OMDb:", error);
-                return null;
-            }
+            return { series, movies };
         }
 
         // --- Funções de Renderização Geral ---
         function renderContent() {
-            const { series, movies, liveTv } = groupItems(filteredItems);
+            // Re-agrupa os itens filtrados para ter certeza que as seções estão atualizadas
+            const { series, movies } = groupItems(filteredItems);
             moviesToDisplay = movies;
             seriesToDisplay = series;
-            liveTvToDisplay = liveTv; 
 
+            // Renderiza Filmes na Grade
             renderMoviesGrid();
+
+            // Renderiza Séries na Grade
             renderSeriesGrid();
-            renderLiveTvGrid(); 
         }
 
+        // Função para renderizar filmes na grade (substitui renderMoviesCarousel)
         function renderMoviesGrid() {
-            moviesGrid.innerHTML = '';
+            moviesGrid.innerHTML = ''; // Limpa a grade de filmes
 
             if (moviesToDisplay.length === 0) {
                 moviesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhum filme encontrado.</div>';
                 return;
             }
 
+            // Adiciona os cards de filmes à grade
             moviesToDisplay.forEach(item => {
                 const isLast = localStorage.getItem('last_film') === item.title;
                 const card = document.createElement('div');
@@ -399,20 +257,22 @@
                     <h3 class="text-sm truncate flex justify-between items-center">
                         <span>${item.title}</span> ${isLast ? '<span class="text-red-500 text-xs">🔴 Visto</span>' : ''}
                     </h3>`;
-                card.onclick = () => openDetailsModal(item, 'movie');
+                card.onclick = () => { openVideoLink(item); window.scrollTo({ top: 0, behavior: 'smooth' }); };
                 moviesGrid.appendChild(card);
             });
         }
 
         function renderSeriesGrid() {
-            seriesGrid.innerHTML = '';
+            seriesGrid.innerHTML = ''; // Limpa a grade de séries
 
             if (Object.keys(seriesToDisplay).length === 0) {
                 seriesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhuma série encontrada.</div>';
                 return;
             }
 
+            // Adiciona os cards de série à grade
             Object.entries(seriesToDisplay).forEach(([name, eps]) => {
+                // Pega a miniatura do primeiro episódio como miniatura da série
                 const thumb = eps[0].thumb;
                 const card = document.createElement('div');
                 card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-105 transition duration-300 overflow-hidden';
@@ -420,28 +280,8 @@
                     <img src="${thumb}" alt="${name}" class="aspect-video object-cover rounded-lg mb-2 w-full" onerror="this.src='https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem'"/>
                     <h3 class="font-bold text-center truncate">${name}</h3>
                     <p class="text-sm text-center text-gray-400">${eps.length} episódios</p>`;
-                card.onclick = () => openDetailsModal(eps[0], 'series');
+                card.onclick = () => openSeries(name, eps);
                 seriesGrid.appendChild(card);
-            });
-        }
-
-        // NOVA: Função para renderizar o grid de TV Ao Vivo
-        function renderLiveTvGrid() {
-            liveTvGrid.innerHTML = '';
-
-            if (liveTvToDisplay.length === 0) {
-                liveTvGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhum canal ao vivo encontrado com os grupos configurados.</div>';
-                return;
-            }
-
-            liveTvToDisplay.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'bg-gray-800 p-2 rounded-xl cursor-pointer hover:scale-105 transition duration-300 overflow-hidden';
-                card.innerHTML = `
-                    <img src="${item.thumb}" alt="${item.title}" class="aspect-video object-cover rounded-lg mb-2 w-full" onerror="this.src='https://dummyimage.com/300x169/444/fff.png&text=Sem+Imagem'"/>
-                    <h3 class="text-sm truncate text-center">${item.title}</h3>`;
-                card.onclick = () => playLiveChannel(item); 
-                liveTvGrid.appendChild(card);
             });
         }
 
@@ -450,10 +290,13 @@
             const q = searchInput.value.toLowerCase();
             const cat = categorySelect.value;
 
+            // Filtra todos os itens primeiro
             filteredItems = allItems.filter(i =>
                 i.title.toLowerCase().includes(q) &&
                 (!cat || i.group === cat)
             );
+
+            // Re-renderiza o conteúdo (filmes e séries) com os novos filtros
             renderContent();
         }
 
@@ -483,55 +326,57 @@
                 episodesList.appendChild(btn);
             });
             episodesModal.classList.remove('hidden');
-            episodesModal.classList.add('flex');
+            episodesModal.classList.add('flex'); // Garante que o modal use flex para centralização
         }
 
         function playEpisode(idx) {
             currentEpIndex = idx;
             const ep = currentSeriesEps[idx];
             localStorage.setItem(`last_${currentSeriesName}`, ep.title);
-            openVideoLink(ep); 
+            openVideoLink(ep);
             episodesModal.classList.add('hidden');
             episodesModal.classList.remove('flex');
         }
 
+        // Função para lidar com o salvamento de tempo de vídeo
         let lastTimeSaved = 0;
         function onTimeUpdate(event) {
             const player = event.target;
             const savedTimeKey = `time_${player.dataset.currentItemTitle}`;
+            // Salva o tempo a cada 5 segundos ou no final do vídeo
             if (Math.floor(player.currentTime) % 5 === 0 && Math.floor(player.currentTime) !== lastTimeSaved) {
                 localStorage.setItem(savedTimeKey, player.currentTime);
                 lastTimeSaved = Math.floor(player.currentTime);
             }
+            // Garante que o tempo final é salvo (se o vídeo terminar)
             if (player.ended) {
-                localStorage.setItem(savedTimeKey, 0);
+                localStorage.setItem(savedTimeKey, 0); // Reseta para 0 se o vídeo terminar
             }
         }
 
-        // Função para reproduzir Filmes e Séries (player principal HLS.js)
         function openVideoLink(item) {
-            // Garante que o player de TV ao vivo esteja fechado e parado
-            closeLivePlayer.click();
-            
             if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
 
+            // Armazena o título do item atual no dataset do player para o onTimeUpdate
             player.dataset.currentItemTitle = item.title;
+
+            // Remove o listener anterior para evitar duplicatas ao reabrir o vídeo
             player.removeEventListener('timeupdate', onTimeUpdate);
 
-            if (!currentSeriesName) { // Se for um filme
+            // Salva o último item assistido (para filmes ou séries)
+            if (!currentSeriesName) { // É um filme
                 localStorage.setItem('last_film', item.title);
-                renderMoviesGrid(); // Atualiza o "Visto"
+                renderMoviesGrid(); // Atualiza a grade para mostrar o '🔴' no filme
+            } else { // É um episódio de série
+                // Não precisamos renderizar a grade de séries aqui para atualizar o '🔴' no modal
             }
 
             const savedTimeKey = `time_${item.title}`;
             const savedTime = parseFloat(localStorage.getItem(savedTimeKey)) || 0;
 
-            // Aplica o proxy para o URL do stream
-            const streamUrl = item.url.startsWith('http') ? PROXY_URL + item.url : item.url; 
-
-            if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) { 
+            if (/\.m3u8$/i.test(item.url) && Hls.isSupported()) {
                 hlsInstance = new Hls();
-                hlsInstance.loadSource(streamUrl); 
+                hlsInstance.loadSource(item.url);
                 hlsInstance.attachMedia(player);
                 hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
                     if (savedTime > 0) {
@@ -540,167 +385,62 @@
                     player.play().catch(() => {});
                 });
             } else {
-                player.src = streamUrl; 
+                player.src = item.url;
                 player.addEventListener('loadedmetadata', function resume() {
                     if (savedTime > 0) {
                         player.currentTime = savedTime;
                     }
                     player.play().catch(() => {});
-                    player.removeEventListener('loadedmetadata', resume);
+                    player.removeEventListener('loadedmetadata', resume); // Remove para não duplicar
                 });
             }
 
             playerContainer.classList.remove('hidden');
-            player.addEventListener('timeupdate', onTimeUpdate);
-            player.muted = false; 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            player.addEventListener('timeupdate', onTimeUpdate); // Adiciona o listener
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Rola para o topo onde o player está
         }
 
-        // NOVO: Função para reproduzir TV Ao Vivo (player Video.js)
-        function playLiveChannel(item) {
-            // Garante que o player de filmes/séries esteja fechado e parado
-            closePlayer.click();
-
-            // Destroi a instância existente do Video.js se houver
-            if (videoJsLivePlayer) {
-                videoJsLivePlayer.dispose(); // Importante para liberar recursos
-                videoJsLivePlayer = null;
-            }
-            
-            // Aplica o proxy para o URL do stream
-            const streamUrl = item.url.startsWith('http') ? PROXY_URL + item.url : item.url; 
-
-            // Opções para o Video.js
-            const videoJsOptions = {
-                autoplay: true, // Inicia automaticamente
-                controls: true, // Mostra os controles
-                fluid: true,    // Ajusta a largura e mantém a proporção 16:9
-                preload: 'auto',
-                liveui: true,   // Ativa UI para live (para Video.js 8+)
-                sources: [{
-                    src: streamUrl,
-                    type: 'application/x-mpegURL' // Tipo para HLS
-                }]
-            };
-
-            // Inicializa o player Video.js
-            videoJsLivePlayer = videojs('livePlayer', videoJsOptions);
-
-            // Tenta reproduzir. Em alguns navegadores, autoplay pode ser bloqueado
-            videoJsLivePlayer.ready(function() {
-                this.play().catch(error => {
-                    console.error("Erro ao tentar reproduzir com Video.js:", error);
-                    alert("Erro ao iniciar a reprodução do canal. Verifique o console para mais detalhes ou tente outro canal.");
-                });
-            });
-
-            livePlayerContainer.classList.remove('hidden');
-            // O Video.js já gerencia o estado de mute através das opções ou do próprio UI
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // Event listener para fechar o player principal (inalterado)
+        // --- Event Listeners ---
         closePlayer.onclick = () => {
+            if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
             player.pause();
             player.src = '';
-            if (hlsInstance) {
-                hlsInstance.destroy();
-                hlsInstance = null;
-            }
             playerContainer.classList.add('hidden');
-            player.removeEventListener('timeupdate', onTimeUpdate);
-            currentSeriesName = null; 
-            currentEpIndex = null;
+            player.removeEventListener('timeupdate', onTimeUpdate); // Remove o listener ao fechar
+            currentSeriesName = null; // Reseta o contexto da série
+            player.dataset.currentItemTitle = ''; // Limpa o título do item atual
         };
 
-        // NOVO: Event listener para fechar o player de TV ao vivo (agora destrói Video.js)
-        closeLivePlayer.onclick = () => {
-            if (videoJsLivePlayer) {
-                videoJsLivePlayer.dispose(); // Destroi a instância do Video.js
-                videoJsLivePlayer = null;
+        nextEpisodeBtn.onclick = () => {
+            if (currentSeriesEps && currentEpIndex !== null && currentEpIndex < currentSeriesEps.length - 1) {
+                playEpisode(currentEpIndex + 1);
             }
-            livePlayerContainer.classList.add('hidden');
+        };
+        prevEpisodeBtn.onclick = () => {
+            if (currentSeriesEps && currentEpIndex !== null && currentEpIndex > 0) {
+                playEpisode(currentEpIndex - 1);
+            }
         };
 
-        // --- Funções do Modal de Detalhes ---
-        async function openDetailsModal(item, type) {
-            // Garante que ambos os players estejam fechados quando o modal de detalhes abrir
-            closePlayer.click();
-            closeLivePlayer.click(); // Garante que Video.js também é fechado
-
-            currentPlayItem = item;
-            detailsModal.classList.remove('hidden');
-            detailsModal.classList.add('flex');
-
-            // Reseta o conteúdo para "Carregando..."
-            detailPoster.src = 'https://dummyimage.com/200x300/444/fff.png&text=Carregando...';
-            detailTitle.textContent = 'Carregando...';
-            detailYearGenre.textContent = 'Ano | Gênero';
-            detailPlot.textContent = 'Carregando sinopse...';
-            detailActors.textContent = 'Elenco: Carregando...';
-            detailRating.textContent = 'Avaliação IMDb: Carregando...';
-            playMovieButton.textContent = type === 'movie' ? '▶️ Assistir Filme' : '▶️ Ver Episódios';
-
-            // Se for uma série, o botão de assistir deve abrir o modal de episódios
-            if (type === 'series') {
-                playMovieButton.onclick = () => {
-                    closeDetailsModal.click(); 
-                    const seriesName = item.title.replace(/[\s\.-]?[sS]\d+[eE]\d+/, '').trim();
-                    const seriesData = seriesToDisplay[seriesName];
-                    if (seriesData) {
-                        openSeries(seriesName, seriesData);
-                    } else {
-                        alert("Série não encontrada para exibir episódios.");
-                    }
-                };
-            } else { // Se for filme, o botão de assistir deve tocar o filme diretamente
-                playMovieButton.onclick = () => {
-                    closeDetailsModal.click(); 
-                    openVideoLink(item); 
-                };
-            }
-
-            // Busca os detalhes da API OMDb
-            const details = await fetchDetailsFromOMDb(item.title, type);
-            if (details) {
-                detailPoster.src = details.poster;
-                detailTitle.textContent = details.title;
-                detailYearGenre.textContent = `${details.year} | ${details.genre}`;
-                detailPlot.textContent = details.plot;
-                detailActors.textContent = `Elenco: ${details.actors}`;
-                detailRating.textContent = `Avaliação IMDb: ${details.imdbRating}`;
-            } else {
-                // Se não encontrar na API, usa os dados do M3U e avisa
-                detailPoster.src = item.thumb;
-                detailTitle.textContent = item.title;
-                detailYearGenre.textContent = 'Informação não disponível';
-                detailPlot.textContent = 'Não foi possível carregar a sinopse detalhada.';
-                detailActors.textContent = 'Elenco: N/A';
-                detailRating.textContent = 'Avaliação IMDb: N/A';
-            }
-        }
-
-        closeDetailsModal.onclick = () => {
-            detailsModal.classList.add('hidden');
-            detailsModal.classList.remove('flex');
-            currentPlayItem = null; 
-        };
-
-        // --- Event Listeners dos Botões Principais e Filtros ---
         searchInput.oninput = filterItems;
         categorySelect.onchange = filterItems;
+
+        closeModal.onclick = () => {
+            episodesModal.classList.add('hidden');
+            episodesModal.classList.remove('flex');
+        };
 
         // --- Funções de Carregamento da Lista ---
         async function loadList() {
             loadSpinner.classList.remove('hidden');
-            baixarBtn.disabled = true;
+            baixarBtn.disabled = true; // Desabilita o botão enquanto carrega
             limparListaBtn.disabled = true;
             searchInput.disabled = true;
             categorySelect.disabled = true;
 
             try {
                 // URL do seu arquivo M3U
-                const playlistUrl = 'https://masteriptv.tech/get.php?username=393880589&password=335139230&type=m3u_plus&output=ts';
+                const playlistUrl = 'http://gerenciador5.xyz:80/get.php?username=446878736420&password=894561145549&type=m3u_plus&output=mpegts';
                 const res = await fetch(playlistUrl);
                 if (!res.ok) {
                     throw new Error(`Erro HTTP! Status: ${res.status} - ${res.statusText}`);
@@ -708,18 +448,18 @@
                 const text = await res.text();
 
                 await saveToDB('m3u_data', text);
-                allItems = parseM3U(text); 
+                allItems = parseM3U(text);
                 updateCategories();
-                filterItems();
+                filterItems(); // Chama filterItems que agora chama renderContent()
 
                 alert('Lista de conteúdo carregada com sucesso!');
 
             } catch (e) {
                 console.error("Erro detalhado ao carregar lista:", e);
-                alert('Erro ao carregar lista: ' + e.message + '. Por favor, verifique sua conexão ou a URL da lista.');
+                alert('Erro ao carregar lista: ' + e.message + '. Por favor, tente novamente ou verifique sua conexão.');
             } finally {
                 loadSpinner.classList.add('hidden');
-                baixarBtn.disabled = false;
+                baixarBtn.disabled = false; // Habilita os botões de volta
                 limparListaBtn.disabled = false;
                 searchInput.disabled = false;
                 categorySelect.disabled = false;
@@ -731,64 +471,44 @@
         limparListaBtn.onclick = async () => {
             if (confirm('Tem certeza que deseja ATUALIZAR a lista? Isso apagará os dados salvos e recarregará a página.')) {
                 await clearDB();
-                location.reload();
+                location.reload(); // Recarrega a página para aplicar a limpeza
             }
         };
 
         // --- Lógica de Navegação de Seção ---
         function showSection(sectionElement) {
-            // Oculta todas as seções
             moviesSection.classList.add('hidden');
             seriesSection.classList.add('hidden');
-            liveTvSection.classList.add('hidden'); 
 
-            // Oculta ambos os containers de player
-            playerContainer.classList.add('hidden'); 
-            livePlayerContainer.classList.add('hidden'); 
-
-            // Pausa e destrói instâncias HLS.js (filmes/séries)
-            player.pause();
-            if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-
-            // Pausa e destrói instância Video.js (TV ao vivo)
-            if (videoJsLivePlayer) {
-                videoJsLivePlayer.dispose();
-                videoJsLivePlayer = null;
-            }
-
-            // Exibe a seção clicada
             sectionElement.classList.remove('hidden');
-            
-            // Reseta o estado do player principal para filmes/séries (útil ao voltar para eles)
-            currentSeriesName = null;
-            currentEpIndex = null;
+            // Não há mais mySwiper.update(), pois o carrossel foi removido
         }
 
         showMoviesBtn.onclick = () => showSection(moviesSection);
         showSeriesBtn.onclick = () => showSection(seriesSection);
-        showLiveTvBtn.onclick = () => showSection(liveTvSection); 
 
         // --- Inicialização ---
+        // Carrega lista salva do IndexedDB ao iniciar
         getFromDB('m3u_data').then(text => {
             if (text) {
-                allItems = parseM3U(text); 
+                allItems = parseM3U(text);
                 updateCategories();
-                filterItems();
+                filterItems(); // Chama filterItems que agora chama renderContent()
             } else {
+                // Se não houver dados salvos, exibe a mensagem de carregamento inicial
                 moviesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Clique em "CARREGAR LISTA DE CONTEUDO" para começar!</div>';
                 seriesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhuma série disponível ainda. Carregue a lista de conteúdo.</div>';
-                liveTvGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Nenhum canal ao vivo disponível ainda. Carregue a lista de conteúdo.</div>'; 
             }
         }).catch(e => {
             console.error("Erro ao carregar dados salvos do IndexedDB:", e);
             alert("Erro ao carregar dados salvos. Por favor, tente limpar os dados do site no seu navegador e recarregue a página.");
             moviesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Erro ao carregar dados.</div>';
             seriesGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Erro ao carregar dados.</div>';
-            liveTvGrid.innerHTML = '<div class="text-center text-gray-400 py-10 col-span-full">Erro ao carregar dados.</div>'; 
         });
 
-        // Inicialmente mostra a seção de filmes
+        // Garante que a seção de filmes seja mostrada por padrão ao carregar
         showSection(moviesSection);
+
     </script>
 </body>
 </html>
